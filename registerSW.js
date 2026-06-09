@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/pts-field-calc/sw.js', { scope: '/pts-field-calc/' })})}
