@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "source": "Southwire catalog data supplied by project engineer (P.E.), June 2026",
+    "specs": {
+      "SPEC 45052": "Southwire control cable: 3 conductors, no separate ground, copper, 600V",
+      "SPEC 45252": "Southwire power cable: 3 conductors + 1 bare copper ground, XHHW-2/XLPE insulation, PVC jacket, copper, 600V"
+    },
+    "cableType": "Tray-rated multiconductor Type TC-ER, copper, 600V",
+    "units": "inches (OD)",
+    "caveat": "All ODs are NOMINAL dimensions, subject to manufacturing tolerance. Catalog revisions change over time; re-check against current Southwire spec sheets. Per-row OD override exists in the app for actual vendor data.",
+    "areaNote": "Cable cross-sectional area is computed in code as (pi/4) * OD^2. No published-area values are stored.",
+    "absentSizes": "300 kcmil and 400 kcmil are intentionally absent from Southwire's standard 3/C power line; selecting them in the app forces manual OD entry."
+  },
+  "sizes": ["14", "12", "10", "8", "6", "4", "2", "1", "1/0", "2/0", "3/0", "4/0", "250", "300", "350", "400", "500", "600", "750"],
+  "cables": {
+    "14":  { "odIn": 0.370, "spec": "SPEC 45052", "construction": "3/C, no ground (control)" },
+    "12":  { "odIn": 0.408, "spec": "SPEC 45052", "construction": "3/C, no ground (control)" },
+    "10":  { "odIn": 0.459, "spec": "SPEC 45052", "construction": "3/C, no ground (control)" },
+    "8":   { "odIn": 0.615, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "6":   { "odIn": 0.691, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "4":   { "odIn": 0.791, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "2":   { "odIn": 0.953, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "1":   { "odIn": 1.091, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "1/0": { "odIn": 1.175, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "2/0": { "odIn": 1.270, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "3/0": { "odIn": 1.378, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "4/0": { "odIn": 1.499, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "250": { "odIn": 1.646, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "300": { "odIn": null, "spec": null, "construction": "Not in Southwire standard 3/C power line - manual OD required" },
+    "350": { "odIn": 1.929, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "400": { "odIn": null, "spec": null, "construction": "Not in Southwire standard 3/C power line - manual OD required" },
+    "500": { "odIn": 2.205, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "600": { "odIn": 2.436, "spec": "SPEC 45252", "construction": "3/C + ground (power)" },
+    "750": { "odIn": 2.656, "spec": "SPEC 45252", "construction": "3/C + ground (power)" }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "table": "NEC Table 310.15(B)(1)(1)",
+    "edition": "NEC 2023",
+    "title": "Ambient Temperature Correction Factors Based on 30C (86F)",
+    "note": "Factor applied to Table 310.16 ampacity. Keyed by ambient temperature range (degrees C) and insulation temperature rating column. null = factor not permitted (ambient exceeds insulation rating range). Factors equal sqrt((Tc - Ta)/(Tc - 30)) rounded to 2 decimals, matching the printed table.",
+    "verify": "Verify against printed NEC 2023 Table 310.15(B)(1)(1)."
+  },
+  "baseAmbientC": 30,
+  "ranges": [
+    { "minC": -100, "maxC": 10, "label": "10 or less", "60": 1.29, "75": 1.20, "90": 1.15 },
+    { "minC": 11, "maxC": 15, "label": "11-15", "60": 1.22, "75": 1.15, "90": 1.12 },
+    { "minC": 16, "maxC": 20, "label": "16-20", "60": 1.15, "75": 1.11, "90": 1.08 },
+    { "minC": 21, "maxC": 25, "label": "21-25", "60": 1.08, "75": 1.05, "90": 1.04 },
+    { "minC": 26, "maxC": 30, "label": "26-30", "60": 1.00, "75": 1.00, "90": 1.00 },
+    { "minC": 31, "maxC": 35, "label": "31-35", "60": 0.91, "75": 0.94, "90": 0.96 },
+    { "minC": 36, "maxC": 40, "label": "36-40", "60": 0.82, "75": 0.88, "90": 0.91 },
+    { "minC": 41, "maxC": 45, "label": "41-45", "60": 0.71, "75": 0.82, "90": 0.87 },
+    { "minC": 46, "maxC": 50, "label": "46-50", "60": 0.58, "75": 0.75, "90": 0.82 },
+    { "minC": 51, "maxC": 55, "label": "51-55", "60": 0.41, "75": 0.67, "90": 0.76 },
+    { "minC": 56, "maxC": 60, "label": "56-60", "60": null, "75": 0.58, "90": 0.71 },
+    { "minC": 61, "maxC": 65, "label": "61-65", "60": null, "75": 0.47, "90": 0.65 },
+    { "minC": 66, "maxC": 70, "label": "66-70", "60": null, "75": 0.33, "90": 0.58 },
+    { "minC": 71, "maxC": 75, "label": "71-75", "60": null, "75": null, "90": 0.50 },
+    { "minC": 76, "maxC": 80, "label": "76-80", "60": null, "75": null, "90": 0.41 },
+    { "minC": 81, "maxC": 85, "label": "81-85", "60": null, "75": null, "90": 0.29 }
+  ]
+}

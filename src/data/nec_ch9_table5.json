@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "table": "NEC Chapter 9, Table 5",
+    "edition": "NEC 2023",
+    "title": "Dimensions of Insulated Conductors and Fixture Wires (Approximate area)",
+    "units": "square inches",
+    "note": "Approximate cross-sectional area per conductor. THHN/THWN/THWN-2 share one dimension column in the printed table; XHHW/XHHW-2 share one column. null = value not entered with confidence; see VERIFICATION.md.",
+    "verify": "All values must be verified against printed NEC 2023 Chapter 9 Table 5, 'Approximate Area' column."
+  },
+  "sizes": ["14", "12", "10", "8", "6", "4", "3", "2", "1", "1/0", "2/0", "3/0", "4/0", "250", "300", "350", "400", "500", "600", "700", "750", "800", "900", "1000"],
+  "insulations": {
+    "THHN/THWN-2": {
+      "label": "THHN, THWN, THWN-2",
+      "areas": {
+        "14": 0.0097, "12": 0.0133, "10": 0.0211, "8": 0.0366, "6": 0.0507,
+        "4": 0.0824, "3": 0.0973, "2": 0.1158, "1": 0.1562, "1/0": 0.1855,
+        "2/0": 0.2223, "3/0": 0.2679, "4/0": 0.3237, "250": 0.3970, "300": 0.4608,
+        "350": 0.5242, "400": 0.5863, "500": 0.7073, "600": 0.8676, "700": 0.9887,
+        "750": 1.0496, "800": 1.1085, "900": 1.2311, "1000": 1.3478
+      }
+    },
+    "XHHW-2": {
+      "label": "XHHW, XHHW-2, XHH",
+      "areas": {
+        "14": 0.0139, "12": 0.0181, "10": 0.0243, "8": 0.0437, "6": 0.0590,
+        "4": 0.0814, "3": 0.0962, "2": 0.1146, "1": 0.1534, "1/0": 0.1825,
+        "2/0": 0.2190, "3/0": 0.2642, "4/0": 0.3197, "250": 0.3904, "300": 0.4536,
+        "350": 0.5166, "400": 0.5782, "500": 0.6984, "600": null, "700": null,
+        "750": null, "800": null, "900": null, "1000": null
+      }
+    }
+  }
+}

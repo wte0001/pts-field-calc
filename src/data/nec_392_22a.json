@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "table": "NEC Table 392.22(A), applied per NEC 392.22(A)(1)",
+    "edition": "NEC 2023",
+    "title": "Allowable Cable Fill Area for Multiconductor Cables in Ladder, Ventilated-Trough, or Solid-Bottom Cable Trays for Cables Rated 2000 Volts or Less",
+    "units": "square inches (Column 1); inches (tray width)",
+    "note": "Column 1: maximum allowable fill area for multiconductor cables where all cables are smaller than 4/0 AWG, ladder or ventilated trough tray. Column 2 (mixed sizes) is computed in code as Column1 - 1.2*Sd per the table note, where Sd is the sum of diameters of all cables 4/0 and larger. Values supplied by project engineer and cross-checked; verify against printed table.",
+    "trayContext": "Aluminum ladder tray, 6 in. loading depth, NEMA VE 1 Class 20C. Depth and load class are display labels only; fill is governed by width per 392.22(A).",
+    "verify": "Verify Column 1 values against printed NEC 2023 Table 392.22(A)."
+  },
+  "standardWidthsIn": [6, 9, 12, 18, 24, 30, 36],
+  "column1AreaSqIn": {
+    "6": 7.0,
+    "9": 10.5,
+    "12": 14.0,
+    "18": 21.0,
+    "24": 28.0,
+    "30": 35.0,
+    "36": 42.0
+  }
+}
