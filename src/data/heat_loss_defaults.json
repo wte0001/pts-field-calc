@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "caveat": "ESTIMATING VALUES ONLY - these are typical heat-loss figures for HVAC load estimating, not code values and not guarantees. Always replace with manufacturer certified loss data for final design.",
+    "lvDryTypeSource": "Efficiency percentages are the DOE 2016 minimum efficiencies for low-voltage dry-type distribution transformers, three-phase (10 CFR 431.196), defined at 35% of nameplate load, unity PF. Verify against the printed regulation. The app derives typical no-load and load losses from these in src/calc/heatReject.js with a stated split assumption.",
+    "mvDryTypeSource": "Typical no-load / full-load-winding loss watts for medium-voltage-primary dry-type (VPI/cast) unit substation transformers, entered from the author's experience with manufacturer data. LOWEST CONFIDENCE data in this file - replace with the actual transformer's certified test report whenever available.",
+    "sectionWattsSource": "Typical watts dissipated per vertical section at rated load, from common industry estimating practice for electrical room HVAC loads. Editable in the app on every row."
+  },
+  "lvDryType": [
+    { "kva": 15, "effPct": 97.89 },
+    { "kva": 30, "effPct": 98.23 },
+    { "kva": 45, "effPct": 98.4 },
+    { "kva": 75, "effPct": 98.6 },
+    { "kva": 112.5, "effPct": 98.74 },
+    { "kva": 150, "effPct": 98.83 },
+    { "kva": 225, "effPct": 98.94 },
+    { "kva": 300, "effPct": 99.02 },
+    { "kva": 500, "effPct": 99.14 },
+    { "kva": 750, "effPct": 99.23 },
+    { "kva": 1000, "effPct": 99.28 }
+  ],
+  "mvDryType": [
+    { "kva": 300, "noLoadW": 1300, "loadLossW": 4100 },
+    { "kva": 500, "noLoadW": 1700, "loadLossW": 5500 },
+    { "kva": 750, "noLoadW": 2200, "loadLossW": 7500 },
+    { "kva": 1000, "noLoadW": 2800, "loadLossW": 9500 },
+    { "kva": 1500, "noLoadW": 3900, "loadLossW": 13000 },
+    { "kva": 2000, "noLoadW": 5000, "loadLossW": 16500 },
+    { "kva": 2500, "noLoadW": 5900, "loadLossW": 20000 }
+  ],
+  "sectionWatts": {
+    "swbd": 600,
+    "mcc": 400,
+    "unitsubLv": 600
+  }
+}

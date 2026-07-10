@@ -1,6 +1,6 @@
 # PTS Field Calc
 
-A phone-friendly NEC reference calculator for field use: wire size (Table 310.16), motor FLC (Table 430.250), conduit fill (Chapter 9), and cable tray fill (392.22(A)). Works fully offline after the first load. No server, no accounts, no data leaves the phone.
+A phone-friendly NEC reference calculator for field use: wire size (Table 310.16), motor FLC (Table 430.250), conduit fill (Chapter 9), cable tray fill (392.22(A)), a kVA / A / kW power converter, and an equipment heat-rejection estimator for HVAC loads. Works fully offline after the first load. No server, no accounts, no data leaves the phone.
 
 **Reference tool only. Verify against the NEC and stamped calculations. Complete VERIFICATION.md before giving this to the team.**
 
@@ -61,7 +61,7 @@ To stop it: click in the terminal and press `Ctrl+C`.
 npm test
 ```
 
-You should see all tests pass (41 of them, covering the tray fill cases, wire sizing, motor FLC, and conduit fill). Run this any time you change a value in `src/data/`.
+You should see all tests pass (69 of them, covering the tray fill cases, wire sizing, motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
 
 ---
 
@@ -129,15 +129,17 @@ The Cable Tray circuit list is saved on the phone (localStorage) and survives re
 ## Project layout
 
 ```
-src/data/          All NEC table values + Southwire cable ODs (JSON, one file per table)
+src/data/          All NEC table values + Southwire cable ODs + heat-loss estimating defaults (JSON)
 src/calc/          Calculation logic (pure functions, no UI) - this is what the tests cover
 src/calc/__tests__/  Unit tests (npm test)
-src/tools/         The four tool screens + About page
+src/tools/         The six tool screens + About page
 VERIFICATION.md    Checklist - verify every data file against the printed NEC before team use
 ```
 
 To correct a table value: edit the JSON file in `src/data/`, run `npm test`, then `npm run deploy`.
 
+The Power tab uses standard AC power math (kVA = √3 × V × A ÷ 1000 three-phase; kW = kVA × PF) — no table data. The Heat tab is an **estimating tool**: its default loss values (in `src/data/heat_loss_defaults.json`) are typical figures, editable on every row, and should be replaced with manufacturer certified data for final HVAC design.
+
 ## What it deliberately does not do
 
-Voltage drop, short circuit, arc flash, termination checks per 110.14(C), single-conductor tray fill, or overload sizing from nameplate. Scope is the four lookups, done transparently, with the math shown.
+Voltage drop, short circuit, arc flash, termination checks per 110.14(C), single-conductor tray fill, or overload sizing from nameplate. Scope is the NEC lookups plus the two field converters, done transparently, with the math shown.

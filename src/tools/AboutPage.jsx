@@ -40,6 +40,36 @@ export default function AboutPage() {
         manual OD entry from vendor data. Cable area is computed as π/4 × OD².
       </p>
 
+      <h3>Power Converter tool</h3>
+      <p>
+        Standard AC power relationships, no table data: three-phase kVA = √3 × V(L-L) × A ÷ 1000,
+        single-phase kVA = V × A ÷ 1000, kW = kVA × PF. Balanced load assumed. Power factor affects
+        only kW — the kVA ↔ A conversion is independent of it.
+      </p>
+
+      <h3>Heat Rejection tool — estimates only</h3>
+      <p>
+        Estimates heat rejected to the room by distribution equipment for HVAC load purposes.
+        Unlike the NEC tools, <b>this tab is not based on code tables — it is an estimating
+        model with typical default values.</b> Every default is editable; replace them with
+        manufacturer certified loss data for final design.
+      </p>
+      <ul>
+        <li><b>Transformers:</b> heat = no-load (core) loss + winding loss × (load fraction)².
+          LV dry-type defaults are derived from the DOE 2016 minimum efficiencies
+          (10 CFR 431.196, defined at 35% load), assuming core loss equals winding loss at the
+          35% test point. Unit-substation (MV primary) defaults are typical manufacturer figures
+          — the lowest-confidence data in the app.</li>
+        <li><b>Switchboards / MCCs:</b> heat = vertical sections × watts per section (at rated
+          load) × (load fraction)². Defaults of 600 W (switchboard) and 400 W (MCC) per section
+          are common estimating values.</li>
+        <li><b>Manufacturer data:</b> enter the stated watts directly — always preferred.</li>
+      </ul>
+      <p>
+        Conversions: BTU/hr = W × 3.412; tons = BTU/hr ÷ 12,000. The equipment list is saved on
+        the phone like the tray-fill circuit list.
+      </p>
+
       <h3>Data verification</h3>
       <p>
         Every table value lives in a JSON file under <code>src/data/</code> and is listed in{' '}
@@ -54,6 +84,8 @@ export default function AboutPage() {
         <li>Termination temperature checks per 110.14(C)</li>
         <li>Single-conductor cable tray fill (392.22(B)) or signal/control-only tray rules</li>
         <li>Overload sizing from nameplate FLA (430.6 requires nameplate, not table, for overloads)</li>
+        <li>Unbalanced or harmonic loads in the power converter (balanced sinusoidal assumed)</li>
+        <li>Certified heat-loss data — the Heat tab is an estimating aid, not a substitute for manufacturer data</li>
       </ul>
 
       <p className="cite">PTS Field Calc v1.0 — runs fully offline after first load. No data leaves the phone.</p>

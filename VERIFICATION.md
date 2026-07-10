@@ -73,6 +73,15 @@ Values were supplied by the project engineer from Southwire catalog data (SPEC 4
 - [ ] Confirm 300 kcmil and 400 kcmil remain absent from the standard 3/C power line (they are intentionally `null` and force manual OD entry in the app)
 - [ ] Confirm 14/12/10 AWG rows are flagged in the app as control-cable construction (3/C, no ground)
 
+## 9. `src/data/heat_loss_defaults.json` — Heat Rejection tool estimating defaults
+
+**This file is different from the NEC files above: it contains estimating values, not code values.** The app labels the whole Heat tab as an estimate and every default is editable in the UI. Verification here means confirming the defaults are reasonable starting points, not that they are "correct" — the correct number for a real project is always the manufacturer's certified loss data.
+
+- [ ] LV dry-type efficiencies (11 values, three-phase, 15–1000 kVA) against DOE 2016 / 10 CFR 431.196 (efficiency defined at 35% load, unity PF). The app derives no-load and winding losses from these in `src/calc/heatReject.js` assuming core loss = winding loss at the 35% test point — review that assumption.
+- [ ] MV dry-type unit-substation typical losses (7 rows, 300–2500 kVA) — **author flagged as the lowest-confidence data in the app.** Compare against a couple of recent transformer submittals (certified test reports) and adjust to your fleet's typical values.
+- [ ] Watts-per-section defaults (switchboard 600 W, MCC 400 W, unit-sub LV sections 600 W at rated load) — sanity-check against manufacturer heat-release data from recent projects.
+- [ ] Confirm the load-scaling model in `src/calc/heatReject.js` (core loss constant, conduction losses × load², BTU/hr = W × 3.412142) reads correctly to another engineer.
+
 ---
 
 ## Edition caveat
@@ -91,3 +100,4 @@ The author's table knowledge is strongest from the 2017/2020 NEC cycles. No chan
 | 6. Ch. 9 Table 5 | | |
 | 7. Table 392.22(A) | | |
 | 8. Southwire ODs | | |
+| 9. Heat-loss estimating defaults | | |

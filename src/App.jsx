@@ -3,13 +3,17 @@ import WireSizeTool from './tools/WireSizeTool.jsx'
 import MotorFlcTool from './tools/MotorFlcTool.jsx'
 import ConduitFillTool from './tools/ConduitFillTool.jsx'
 import TrayFillTool from './tools/TrayFillTool.jsx'
+import PowerConvertTool from './tools/PowerConvertTool.jsx'
+import HeatRejectTool from './tools/HeatRejectTool.jsx'
 import AboutPage from './tools/AboutPage.jsx'
 
 const TABS = [
-  { id: 'wire', label: 'Wire Size', ic: '⌀' },
-  { id: 'motor', label: 'Motor FLC', ic: 'M' },
+  { id: 'wire', label: 'Wire', ic: '⌀' },
+  { id: 'motor', label: 'Motor', ic: 'M' },
   { id: 'conduit', label: 'Conduit', ic: '◎' },
-  { id: 'tray', label: 'Tray Fill', ic: '☰' },
+  { id: 'tray', label: 'Tray', ic: '☰' },
+  { id: 'power', label: 'Power', ic: '⚡' },
+  { id: 'heat', label: 'Heat', ic: '♨' },
   { id: 'about', label: 'About', ic: 'ⓘ' }
 ]
 
@@ -28,6 +32,8 @@ export default function App() {
         {tab === 'motor' && <MotorFlcTool />}
         {tab === 'conduit' && <ConduitFillTool />}
         {tab === 'tray' && <TrayFillTool />}
+        {tab === 'power' && <PowerConvertTool />}
+        {tab === 'heat' && <HeatRejectTool />}
         {tab === 'about' && <AboutPage />}
       </main>
 
