@@ -53,6 +53,85 @@ describe('wire size - Table 310.16', () => {
   })
 })
 
+describe('wire size - hard-to-get sizes and parallel runs', () => {
+  it('skips 3 AWG: 95 A copper 75C recommends 2 AWG, reports 3 AWG as hard to get', () => {
+    const r = selectWireSize(95, 'copper', 75)
+    expect(r.size).toBe('2')
+    expect(r.hardToGetSkipped.size).toBe('3')
+    expect(r.hardToGetSkipped.baseAmpacity).toBe(100)
+  })
+  it('skips 300 kcmil: 280 A recommends 350', () => {
+    const r = selectWireSize(280, 'copper', 75)
+    expect(r.size).toBe('350')
+    expect(r.hardToGetSkipped.size).toBe('300')
+  })
+  it('skips 400 kcmil: 320 A recommends 500', () => {
+    const r = selectWireSize(320, 'copper', 75)
+    expect(r.size).toBe('500')
+    expect(r.hardToGetSkipped.size).toBe('400')
+  })
+  it('skips 700 kcmil: 430 A recommends 750', () => {
+    const r = selectWireSize(430, 'copper', 75)
+    expect(r.size).toBe('750')
+    expect(r.baseAmpacity).toBe(475)
+    expect(r.hardToGetSkipped.size).toBe('700')
+    expect(r.hardToGetSkipped.baseAmpacity).toBe(460)
+  })
+  it('common size selected normally reports no hard-to-get skip', () => {
+    const r = selectWireSize(240, 'copper', 75)
+    expect(r.size).toBe('250')
+    expect(r.hardToGetSkipped).toBeNull()
+  })
+  it('next-size-up also skips hard-to-get sizes (250 -> 350, not 300)', () => {
+    const r = selectWireSize(240, 'copper', 75)
+    expect(r.nextSize.size).toBe('350')
+  })
+  it('no parallel suggestions at or below 420 A', () => {
+    expect(selectWireSize(420, 'copper', 75).parallel).toBeNull()
+    expect(selectWireSize(300, 'copper', 75).parallel).toBeNull()
+  })
+  it('parallel options above 420 A: 430 A offers 2x 4/0 then 3x 1/0 and stops at the 1/0 floor', () => {
+    const r = selectWireSize(430, 'copper', 75)
+    expect(r.parallel).toEqual([
+      { runs: 2, size: '4/0', baseAmpacity: 230, deratedAmpacity: 230, totalAmpacity: 460 },
+      { runs: 3, size: '1/0', baseAmpacity: 150, deratedAmpacity: 150, totalAmpacity: 450 }
+    ])
+  })
+  it('parallel picks avoid hard-to-get sizes and apply derating factors', () => {
+    // 500 A at 40C ambient (0.88): 250 kcmil derated 224.4 fails, 300 skipped, 350 derated 272.8 passes
+    const r = selectWireSize(500, 'copper', 75, { ambientC: 40 })
+    expect(r.parallel[0].runs).toBe(2)
+    expect(r.parallel[0].size).toBe('350')
+    expect(r.parallel[0].deratedAmpacity).toBeCloseTo(272.8, 1)
+  })
+  it('offers parallel options even when no single conductor is adequate', () => {
+    const r = selectWireSize(800, 'copper', 75)
+    expect(r.error).toBeTruthy()
+    expect(r.parallel[0]).toEqual({ runs: 2, size: '600', baseAmpacity: 420, deratedAmpacity: 420, totalAmpacity: 840 })
+    // 3 runs: 266.7 A/run - 300 kcmil skipped as hard to get, 350 (310 A) selected
+    expect(r.parallel[1].size).toBe('350')
+  })
+  it('5000 A recommends 11 sets of 750 kcmil, with 12x600 and 14x500 alternatives', () => {
+    const r = selectWireSize(5000, 'copper', 75)
+    expect(r.error).toBeTruthy() // no single conductor
+    expect(r.parallel).toEqual([
+      { runs: 11, size: '750', baseAmpacity: 475, deratedAmpacity: 475, totalAmpacity: 5225 },
+      { runs: 12, size: '600', baseAmpacity: 420, deratedAmpacity: 420, totalAmpacity: 5040 },
+      { runs: 14, size: '500', baseAmpacity: 380, deratedAmpacity: 380, totalAmpacity: 5320 }
+    ])
+  })
+  it('parallel picks never exceed 750 kcmil per conductor', () => {
+    // 1900 A: fewest sets within the 750 kcmil cap is 4x750, not 3x2000 kcmil
+    const r = selectWireSize(1900, 'copper', 75)
+    expect(r.parallel[0]).toEqual({ runs: 4, size: '750', baseAmpacity: 475, deratedAmpacity: 475, totalAmpacity: 1900 })
+  })
+  it('returns null parallel when the load exceeds 16 sets of 750 kcmil', () => {
+    const r = selectWireSize(99999, 'copper', 90)
+    expect(r.error).toBeTruthy()
+    expect(r.parallel).toBeNull()
+  })
+})
+
 describe('motor FLC - Table 430.250', () => {
   it('returns 65 A for 50 HP at 460V', () => {
     const r = motorFlc('50', 460)

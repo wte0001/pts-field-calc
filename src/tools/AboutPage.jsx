@@ -40,6 +40,18 @@ export default function AboutPage() {
         manual OD entry from vendor data. Cable area is computed as π/4 × OD².
       </p>
 
+      <h3>Wire Size tool — stock preferences and parallel runs</h3>
+      <p>
+        Two behaviors are <b>PTS procurement preferences, not code rules</b>: sizes that are hard
+        to get (3 AWG, 300, 400, and 700 kcmil) are shown when they would satisfy the load but the
+        recommendation skips to the next common size (e.g. 700 → 750 kcmil). For loads above 420 A
+        (600 kcmil Cu at 75°C — the largest single conductor PTS considers practical), the tool also
+        suggests parallel-run options per NEC 310.10(G): 1/0 AWG minimum, identical size, material,
+        length, and terminations, each run assumed in its own raceway with the same correction factors.
+        Parallel picks are capped at 750 kcmil per conductor and 16 sets per phase (PTS pulling and
+        termination practice) — e.g. a 5000 A load suggests 11 sets of 750 kcmil copper.
+      </p>
+
       <h3>Power Converter tool</h3>
       <p>
         Standard AC power relationships, no table data: three-phase kVA = √3 × V(L-L) × A ÷ 1000,

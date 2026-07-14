@@ -61,7 +61,7 @@ To stop it: click in the terminal and press `Ctrl+C`.
 npm test
 ```
 
-You should see all tests pass (69 of them, covering the tray fill cases, wire sizing, motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
+You should see all tests pass (82 of them, covering the tray fill cases, wire sizing (including hard-to-get size skipping and parallel-run suggestions), motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
 
 ---
 

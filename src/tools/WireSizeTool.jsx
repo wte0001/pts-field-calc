@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { selectWireSize } from '../calc/wireSize.js'
+import { selectWireSize, UNCOMMON_SIZES, PARALLEL_SUGGEST_AMPS } from '../calc/wireSize.js'
 
 const KCMIL = ['250', '300', '350', '400', '500', '600', '700', '750', '800', '900', '1000', '1250', '1500', '1750', '2000']
 const sizeLabel = s => KCMIL.includes(s) ? `${s} kcmil` : `${s} AWG`
@@ -77,8 +77,43 @@ export default function WireSizeTool() {
               )}
             </tbody>
           </table>
+          {result.hardToGetSkipped && (
+            <div className="warn">
+              ⚠ {sizeLabel(result.hardToGetSkipped.size)} ({result.hardToGetSkipped.deratedAmpacity} A
+              {result.factors.usingAdvanced ? ' derated' : ''}) would carry the load but is hard to get —
+              recommending {sizeLabel(result.size)} instead.
+            </div>
+          )}
           {result.warnings.map((w, i) => <div className="warn" key={i}>{w}</div>)}
           <div className="cite">Source: {result.table}. Termination ratings per 110.14(C) may govern separately — this tool does not check terminations.</div>
+        </div>
+      )}
+
+      {result && result.parallel && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Parallel run options — {result.amps} A</h3>
+          <table className="widthtable">
+            <thead>
+              <tr><th>Runs/phase</th><th>Conductor</th><th>Per run</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              {result.parallel.map((o, i) => (
+                <tr key={o.runs} className={i === 0 ? 'sel' : ''}>
+                  <td>{o.runs}×</td>
+                  <td>{sizeLabel(o.size)}</td>
+                  <td>{o.deratedAmpacity} A</td>
+                  <td>{o.totalAmpacity} A</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="cite">
+            Shown for loads above {PARALLEL_SUGGEST_AMPS} A; fewest-runs option highlighted.
+            Per NEC 310.10(G): 1/0 AWG minimum, all runs identical size, material, length, and termination.
+            PTS practice: parallel conductors capped at 750 kcmil, up to 16 sets.
+            Assumes each run in its own raceway with the same correction factors applied.
+            Hard-to-get sizes ({UNCOMMON_SIZES.map(sizeLabel).join(', ')}) are not recommended.
+          </div>
         </div>
       )}
     </div>
