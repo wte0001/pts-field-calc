@@ -65,8 +65,10 @@ export default function AboutPage() {
         reactance and understates drop on large conductors. Length is always <b>one-way</b>.
         Parallel sets divide the current. The 3% / 5% limits shown are the informational notes to
         210.19(A) and 215.2(A) — recommendations, not code requirements.
-        <b>The Table 9 data file is the author's lowest-confidence NEC entry in this app — verify
-        it against the printed table before relying on it (VERIFICATION.md section 10).</b>
+        The Table 9 / Table 8 data was verified in 2026-07 against multiple independent published
+        reproductions of the table text and manufacturer engineering handbooks with zero
+        discrepancies; a spot-check against the printed NEC 2023 remains as final sign-off
+        (VERIFICATION.md section 10).
       </p>
 
       <h3>Power Converter tool</h3>

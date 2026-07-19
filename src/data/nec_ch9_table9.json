@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "source": "NEC 2023 Chapter 9, Table 9 - AC resistance and reactance, ohms per 1000 ft, 600V 60 Hz 75C, three single conductors in conduit. Circular mils from Chapter 9 Table 8.",
-    "caveat": "Author entered these from memory pending verification. CONFIDENCE IS LOWER THAN THE OTHER NEC FILES IN THIS APP - the XL columns and copper-PVC resistance follow well-known patterns, but the aluminum-conduit and steel-conduit resistance columns and aluminum-wire columns need careful checking against the printed Table 9. See VERIFICATION.md section 10.",
-    "notes": "xl.pvc applies to both PVC and aluminum conduit per the table's combined column heading. Table 9 does not list 700, 800, 900, or 1250+ kcmil. Aluminum wire is not listed at 14 AWG.",
+    "source": "NEC Chapter 9, Table 9 - AC resistance and reactance, ohms per 1000 ft, 600V 60 Hz 75C, three single conductors in conduit. Circular mils from Chapter 9 Table 8.",
+    "caveat": "Entered from memory, then VERIFIED 2026-07-19 by multi-source research: every value (all 42 XL, all 63 copper R, all 60 aluminum R, all 21 circular mils) matched primary reproductions of the 2017 NEC table text (licensed Chapter 9 PDFs, 2007 California Electrical Code adoption, 2011/2014 Table 8 scans) and independent manufacturer/engineering sources (Southwire and Okonite handbooks, Mike Holt textbook, PE-authored PDH course) with zero discrepancies. Secondary sources indicate the tables are unchanged in the 2020/2023 editions, but that newer primary text was not directly read - the printed NEC 2023 spot-check in VERIFICATION.md section 10 remains as final sign-off.",
+    "notes": "xl.pvc applies to both PVC and aluminum conduit per the table's combined column heading. Table 9 does not list 700, 800, 900, or 1250+ kcmil. Aluminum wire is not listed at 14 AWG (Table 10 footnote: not available). Non-monotonic entries (8 AWG XL above 10 AWG, 1 AWG XL above 2 AWG, 250 kcmil steel XL above 4/0) are genuine table features, verified - do not 'fix' them.",
     "kFactors": {
       "copper": 12.9,
       "aluminum": 21.2,

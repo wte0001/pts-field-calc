@@ -84,20 +84,17 @@ Values were supplied by the project engineer from Southwire catalog data (SPEC 4
 
 ## 10. `src/data/nec_ch9_table9.json` — Chapter 9 Table 9 (AC resistance and reactance) + Table 8 circular mils
 
-**AUTHOR'S LOWEST-CONFIDENCE NEC FILE. Verify before anyone relies on the Voltage Drop tool.** The XL columns and the copper/PVC resistance column follow well-known patterns, but the aluminum-conduit and steel-conduit resistance columns and all aluminum-wire columns were entered from weaker memory. All values are ohms per 1000 ft at 75°C, 60 Hz, three single conductors in conduit.
+**Status: research-verified 2026-07-19, awaiting printed-book sign-off.** All 186 values were entered from memory, then verified by a multi-source research pass with adversarial cross-checking: every value matched primary reproductions of the 2017 NEC table text (licensed Chapter 9 PDFs from two independent hosts, the 2007 California Electrical Code adoption of the same tables, 2011/2014 Table 8 scans) and independent non-NEC sources (Southwire Power Cable Manual, Okonite Engineering Handbook, a Mike Holt textbook, a PE-authored PDH course) — **zero discrepancies found in any column, including the ones originally flagged low-confidence.** The Table 9 Note 2 effective-Z formula, the two-column XL layout, the 21-size list (no 700/800/900 kcmil), and the missing 14 AWG aluminum row were likewise confirmed against the table text.
 
-- [ ] XL, "PVC, Aluminum Conduits" column, 14 AWG–1000 kcmil (21 values)
-- [ ] XL, "Steel Conduit" column, 14 AWG–1000 kcmil (21 values)
-- [ ] AC resistance, uncoated copper, PVC conduit (21 values)
-- [ ] AC resistance, uncoated copper, aluminum conduit (21 values) — **flagged low confidence**
-- [ ] AC resistance, uncoated copper, steel conduit (21 values) — **flagged low confidence**
-- [ ] AC resistance, aluminum wire, PVC conduit (20 values; 14 AWG is `null`) — **flagged low confidence**
-- [ ] AC resistance, aluminum wire, aluminum conduit (20 values) — **flagged low confidence**
-- [ ] AC resistance, aluminum wire, steel conduit (20 values) — **flagged low confidence**
-- [ ] Confirm Table 9 lists exactly these 21 sizes (no 700/800/900 kcmil, nothing above 1000)
-- [ ] Circular mils against Chapter 9 Table 8 (21 values — standard AWG/kcmil areas, high confidence)
-- [ ] Confirm the effective-Z formula in `src/calc/voltageDrop.js` (Z = R·cosθ + X·sinθ, lagging) matches the Table 9 footnote method, and that the app's stated assumptions (75°C, 60 Hz, three conductors per raceway) read correctly
-- [ ] K-factor constants (12.9 Cu / 21.2 Al Ω·cmil/ft) are an estimating convention, not NEC data — confirm the app labels them as such
+Remaining risk is narrow: the primary text read was the **2017** edition; secondary sources say Tables 8 and 9 are unchanged through 2020/2023 but those editions were not directly read. The book check below is therefore a spot-check against the printed **2023** NEC rather than a from-scratch verification. All values are ohms per 1000 ft at 75°C, 60 Hz, three single conductors in conduit.
+
+- [ ] Spot-check XL columns against printed 2023 Table 9 (a few rows incl. the genuine quirks: 8 AWG > 10 AWG, 1 AWG 0.046 > 2 AWG 0.045, 250 kcmil steel 0.052 > 4/0 0.051)
+- [ ] Spot-check copper resistance columns (PVC/aluminum/steel) — e.g. 3/0: 0.077/0.082/0.079, 250: 0.052/0.057/0.054, 500: 0.027/0.032/0.029
+- [ ] Spot-check aluminum-wire resistance columns — e.g. 250: 0.085/0.090/0.086, 1000: 0.023/0.027/0.025; confirm the 14 AWG row is dashes
+- [ ] Confirm 2023 Table 9 still lists exactly 21 sizes (no 700/800/900 kcmil, nothing above 1000)
+- [ ] Confirm 2023 Note 2 still reads Ze = R × PF + XL sin[arccos(PF)] (the formula in `src/calc/voltageDrop.js`)
+- [ ] Circular mils vs. printed Table 8 (AWG sizes are printed digits; kcmil rows show a dash — the app's kcmil × 1000 entries are definitional)
+- [ ] K-factor constants (12.9 Cu / 21.2 Al Ω·cmil/ft) — research confirmed these are a Table-8-derived estimating convention appearing nowhere in the NEC text; confirm the app still labels them as such
 
 ---
 
