@@ -20,6 +20,8 @@ export default function AboutPage() {
         <li><b>Table 310.15(B)(1)(1)</b> — ambient temperature correction, 30°C base (Wire Size, advanced)</li>
         <li><b>Table 310.15(C)(1)</b> — adjustment for more than three current-carrying conductors (Wire Size, advanced)</li>
         <li><b>Table 430.250</b> — three-phase motor full-load current (Motor FLC tool)</li>
+        <li><b>Chapter 9, Table 9</b> — AC resistance and reactance for 600V conductors (Voltage Drop tool)</li>
+        <li><b>Chapter 9, Table 8</b> — conductor circular mils (Voltage Drop tool, K-factor method)</li>
         <li><b>Chapter 9, Table 1</b> — percent conduit fill (Conduit Fill tool)</li>
         <li><b>Chapter 9, Table 4</b> — conduit internal areas (Conduit Fill tool)</li>
         <li><b>Chapter 9, Table 5</b> — insulated conductor dimensions (Conduit Fill tool)</li>
@@ -50,6 +52,21 @@ export default function AboutPage() {
         length, and terminations, each run assumed in its own raceway with the same correction factors.
         Parallel picks are capped at 750 kcmil per conductor and 16 sets per phase (PTS pulling and
         termination practice) — e.g. a 5000 A load suggests 11 sets of 750 kcmil copper.
+      </p>
+
+      <h3>Voltage Drop tool</h3>
+      <p>
+        Two selectable methods. <b>NEC Table 9 (R + jX):</b> effective impedance
+        Z = R·cosθ + X·sinθ from Chapter 9 Table 9 (60 Hz, 75°C, three single conductors in one
+        raceway, lagging PF), with VD = √3 (or 2 for single-phase) × I × L/1000 × Z. This is the
+        accurate method, especially at 250 kcmil and above where reactance matters.
+        <b> K-factor (quick):</b> the classic field estimate VD = 2 (or √3) × K × I × L ÷ cmil with
+        K = 12.9 Cu / 21.2 Al Ω·cmil/ft — an estimating convention, not NEC data; it ignores
+        reactance and understates drop on large conductors. Length is always <b>one-way</b>.
+        Parallel sets divide the current. The 3% / 5% limits shown are the informational notes to
+        210.19(A) and 215.2(A) — recommendations, not code requirements.
+        <b>The Table 9 data file is the author's lowest-confidence NEC entry in this app — verify
+        it against the printed table before relying on it (VERIFICATION.md section 10).</b>
       </p>
 
       <h3>Power Converter tool</h3>
@@ -92,7 +109,8 @@ export default function AboutPage() {
 
       <h3>What this app does not do</h3>
       <ul>
-        <li>Voltage drop, short-circuit, or arc-flash calculations</li>
+        <li>Short-circuit or arc-flash calculations</li>
+        <li>DC voltage drop (the Voltage Drop tool is AC only)</li>
         <li>Termination temperature checks per 110.14(C)</li>
         <li>Single-conductor cable tray fill (392.22(B)) or signal/control-only tray rules</li>
         <li>Overload sizing from nameplate FLA (430.6 requires nameplate, not table, for overloads)</li>

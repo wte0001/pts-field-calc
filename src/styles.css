@@ -37,6 +37,12 @@ body {
   position: sticky; top: 0; z-index: 10;
 }
 .header .sub { font-weight: 400; font-size: 12px; opacity: 0.85; }
+.header .hdr-right { display: flex; align-items: center; gap: 10px; }
+.header .info-btn {
+  background: transparent; border: 2px solid rgba(255, 255, 255, 0.55); color: #fff;
+  border-radius: 50%; width: 32px; height: 32px; font-size: 17px; font-weight: 700;
+  line-height: 1; cursor: pointer; padding: 0;
+}
 
 .content {
   flex: 1;

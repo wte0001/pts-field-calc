@@ -82,6 +82,23 @@ Values were supplied by the project engineer from Southwire catalog data (SPEC 4
 - [ ] Watts-per-section defaults (switchboard 600 W, MCC 400 W, unit-sub LV sections 600 W at rated load) — sanity-check against manufacturer heat-release data from recent projects.
 - [ ] Confirm the load-scaling model in `src/calc/heatReject.js` (core loss constant, conduction losses × load², BTU/hr = W × 3.412142) reads correctly to another engineer.
 
+## 10. `src/data/nec_ch9_table9.json` — Chapter 9 Table 9 (AC resistance and reactance) + Table 8 circular mils
+
+**AUTHOR'S LOWEST-CONFIDENCE NEC FILE. Verify before anyone relies on the Voltage Drop tool.** The XL columns and the copper/PVC resistance column follow well-known patterns, but the aluminum-conduit and steel-conduit resistance columns and all aluminum-wire columns were entered from weaker memory. All values are ohms per 1000 ft at 75°C, 60 Hz, three single conductors in conduit.
+
+- [ ] XL, "PVC, Aluminum Conduits" column, 14 AWG–1000 kcmil (21 values)
+- [ ] XL, "Steel Conduit" column, 14 AWG–1000 kcmil (21 values)
+- [ ] AC resistance, uncoated copper, PVC conduit (21 values)
+- [ ] AC resistance, uncoated copper, aluminum conduit (21 values) — **flagged low confidence**
+- [ ] AC resistance, uncoated copper, steel conduit (21 values) — **flagged low confidence**
+- [ ] AC resistance, aluminum wire, PVC conduit (20 values; 14 AWG is `null`) — **flagged low confidence**
+- [ ] AC resistance, aluminum wire, aluminum conduit (20 values) — **flagged low confidence**
+- [ ] AC resistance, aluminum wire, steel conduit (20 values) — **flagged low confidence**
+- [ ] Confirm Table 9 lists exactly these 21 sizes (no 700/800/900 kcmil, nothing above 1000)
+- [ ] Circular mils against Chapter 9 Table 8 (21 values — standard AWG/kcmil areas, high confidence)
+- [ ] Confirm the effective-Z formula in `src/calc/voltageDrop.js` (Z = R·cosθ + X·sinθ, lagging) matches the Table 9 footnote method, and that the app's stated assumptions (75°C, 60 Hz, three conductors per raceway) read correctly
+- [ ] K-factor constants (12.9 Cu / 21.2 Al Ω·cmil/ft) are an estimating convention, not NEC data — confirm the app labels them as such
+
 ---
 
 ## Edition caveat
@@ -101,3 +118,4 @@ The author's table knowledge is strongest from the 2017/2020 NEC cycles. No chan
 | 7. Table 392.22(A) | | |
 | 8. Southwire ODs | | |
 | 9. Heat-loss estimating defaults | | |
+| 10. Ch. 9 Table 9 / Table 8 (voltage drop) | | |

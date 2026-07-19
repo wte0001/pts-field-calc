@@ -6,14 +6,21 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import App from '../../App.jsx'
 import PowerConvertTool from '../PowerConvertTool.jsx'
 import HeatRejectTool from '../HeatRejectTool.jsx'
+import VoltageDropTool from '../VoltageDropTool.jsx'
 import AboutPage from '../AboutPage.jsx'
 
 describe('render smoke tests', () => {
-  it('App renders with all seven tabs', () => {
+  it('App renders all seven tool tabs plus the About header button', () => {
     const html = renderToStaticMarkup(React.createElement(App))
-    for (const label of ['Wire', 'Motor', 'Conduit', 'Tray', 'Power', 'Heat', 'About']) {
+    for (const label of ['Wire', 'VDrop', 'Motor', 'Conduit', 'Tray', 'Power', 'Heat', 'About']) {
       expect(html).toContain(label)
     }
+  })
+  it('Voltage drop tool renders with defaults', () => {
+    const html = renderToStaticMarkup(React.createElement(VoltageDropTool))
+    expect(html).toContain('Voltage Drop')
+    expect(html).toContain('ONE-WAY')
+    expect(html).toContain('NEC Table 9')
   })
   it('Power converter renders with defaults', () => {
     const html = renderToStaticMarkup(React.createElement(PowerConvertTool))

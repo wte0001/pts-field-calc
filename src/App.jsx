@@ -3,18 +3,19 @@ import WireSizeTool from './tools/WireSizeTool.jsx'
 import MotorFlcTool from './tools/MotorFlcTool.jsx'
 import ConduitFillTool from './tools/ConduitFillTool.jsx'
 import TrayFillTool from './tools/TrayFillTool.jsx'
+import VoltageDropTool from './tools/VoltageDropTool.jsx'
 import PowerConvertTool from './tools/PowerConvertTool.jsx'
 import HeatRejectTool from './tools/HeatRejectTool.jsx'
 import AboutPage from './tools/AboutPage.jsx'
 
 const TABS = [
   { id: 'wire', label: 'Wire', ic: '⌀' },
+  { id: 'vdrop', label: 'VDrop', ic: 'Δ' },
   { id: 'motor', label: 'Motor', ic: 'M' },
   { id: 'conduit', label: 'Conduit', ic: '◎' },
   { id: 'tray', label: 'Tray', ic: '☰' },
   { id: 'power', label: 'Power', ic: '⚡' },
-  { id: 'heat', label: 'Heat', ic: '♨' },
-  { id: 'about', label: 'About', ic: 'ⓘ' }
+  { id: 'heat', label: 'Heat', ic: '♨' }
 ]
 
 export default function App() {
@@ -24,11 +25,16 @@ export default function App() {
     <div className="app">
       <header className="header">
         <span>PTS Field Calc</span>
-        <span className="sub">NEC 2023</span>
+        <span className="hdr-right">
+          <span className="sub">NEC 2023</span>
+          <button className="info-btn" aria-label="About" title="About"
+            onClick={() => setTab('about')}>ⓘ</button>
+        </span>
       </header>
 
       <main className="content">
         {tab === 'wire' && <WireSizeTool />}
+        {tab === 'vdrop' && <VoltageDropTool />}
         {tab === 'motor' && <MotorFlcTool />}
         {tab === 'conduit' && <ConduitFillTool />}
         {tab === 'tray' && <TrayFillTool />}
