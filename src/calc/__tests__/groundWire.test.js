@@ -92,7 +92,35 @@ describe('groundConductor - companion rules', () => {
   it('250.122(F): parallel sets get a note, and the EGC is not divided', () => {
     const r = groundConductor({ ocpdAmps: 1200, material: 'copper', circuitSize: '500', minAmpacitySize: '500', sets: 3 })
     expect(r.size).toBe('3/0')
+    expect(r.sets).toBe(3)
     expect(r.notes.some(n => n.includes('250.122(F)') && n.includes('3'))).toBe(true)
+  })
+  it('250.122(F): lists the four arrangements including the cable-tray allowance', () => {
+    const r = groundConductor({ ocpdAmps: 1200, material: 'copper', circuitSize: '500', minAmpacitySize: '500', sets: 3 })
+    expect(r.parallelGuidance).toHaveLength(4)
+    // separate raceways: one full-size EGC per raceway
+    expect(r.parallelGuidance[0].text).toContain('3 × 3/0')
+    // all in one raceway/gutter/tray: a single EGC for the group
+    expect(r.parallelGuidance[1].text).toContain('single 3/0')
+    // the tray allowance the field actually asks about
+    expect(r.parallelGuidance[2].arrangement).toContain('multiconductor cables')
+    expect(r.parallelGuidance[2].text).toContain('does not need its own')
+    // tray itself as EGC is a separate article
+    expect(r.parallelGuidance[3].rule).toBe('392.60')
+  })
+  it('single-conductor makeups get no parallel guidance', () => {
+    const r = groundConductor({ ocpdAmps: 400, material: 'copper', circuitSize: '500', minAmpacitySize: '500' })
+    expect(r.sets).toBe(1)
+    expect(r.parallelGuidance).toHaveLength(0)
+  })
+  it('parallel EGC is sized on the device rating, not the per-run current', () => {
+    // 1200 A device split into 3 runs: EGC is the full 3/0 for 1200 A, NOT the
+    // 1 AWG a 400 A per-run share would give.
+    const full = groundConductor({ ocpdAmps: 1200, material: 'copper', circuitSize: '500', minAmpacitySize: '500', sets: 3 })
+    const perRun = groundConductor({ ocpdAmps: 400, material: 'copper', circuitSize: '500', minAmpacitySize: '500' })
+    expect(full.size).toBe('3/0')
+    expect(perRun.size).toBe('3')
+    expect(full.size).not.toBe(perRun.size)
   })
   it('aluminum EGC carries the 250.120(B) restriction note', () => {
     const r = groundConductor({ ocpdAmps: 400, material: 'aluminum', circuitSize: '500', minAmpacitySize: '500' })

@@ -114,8 +114,31 @@ export function groundConductor(p) {
     notes.push(`250.122(A): EGC reduced to ${p.circuitSize} — it need not be larger than the circuit conductors.`)
   }
 
+  // 250.122(F): parallel sets. Three permitted arrangements, all using the SAME
+  // full-size EGC from the table - the EGC is never divided among the runs.
+  const parallelGuidance = []
   if (Number.isFinite(p.sets) && p.sets > 1) {
-    notes.push(`250.122(F): run a full-size ${size} EGC in EACH of the ${p.sets} raceways — the EGC is not divided among parallel runs.`)
+    parallelGuidance.push({
+      arrangement: `Separate raceways or cables (${p.sets} runs)`,
+      rule: '250.122(F)',
+      text: `A full-size ${size} EGC is required in EACH of the ${p.sets} raceways or cables — ${p.sets} × ${size}. The EGC is not divided among parallel runs.`
+    })
+    parallelGuidance.push({
+      arrangement: 'All runs in one raceway, gutter, or tray',
+      rule: '250.122(F)',
+      text: `A single ${size} EGC is permitted for the whole group.`
+    })
+    parallelGuidance.push({
+      arrangement: 'Parallel multiconductor cables in a common cable tray',
+      rule: '250.122(F) tray allowance',
+      text: `One standalone ${size} EGC run in the tray is permitted for the group, bonded together with the EGCs inside the individual cables — so each parallel cable does not need its own full-size EGC. Confirm the subdivision in your code edition.`
+    })
+    parallelGuidance.push({
+      arrangement: 'Metallic tray as the EGC',
+      rule: '392.60',
+      text: 'Separately, the metallic tray system itself may serve as the EGC where it meets 392.60 (minimum metal cross-section per Table 392.60(A), qualified-persons servicing, marking, bonded sections and fittings).'
+    })
+    notes.push(`250.122(F): the EGC is sized on the ${p.ocpdAmps} A device and is NOT divided among the ${p.sets} runs — see the arrangements below.`)
   }
   if (p.material === 'aluminum') {
     notes.push('250.120(B): aluminum EGCs are not permitted in direct contact with masonry or earth, in corrosive conditions, or within 18 in. of earth.')
@@ -128,8 +151,10 @@ export function groundConductor(p) {
     tableRating: base.tableRating,
     baseSize: base.size,
     size,
+    sets: Number.isFinite(p.sets) && p.sets > 1 ? p.sets : 1,
     proportional,
     capped,
+    parallelGuidance,
     notes
   }
 }

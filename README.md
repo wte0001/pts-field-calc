@@ -61,7 +61,7 @@ To stop it: click in the terminal and press `Ctrl+C`.
 npm test
 ```
 
-You should see all tests pass (120 of them, covering the tray fill cases, wire sizing (including hard-to-get size skipping and parallel-run suggestions), EGC sizing with the 250.122(A)/(B)/(F) companion rules, voltage drop (both methods), motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
+You should see all tests pass (125 of them, covering the tray fill cases, wire sizing (including hard-to-get size skipping and parallel-run suggestions), EGC sizing with the 250.122(A)/(B)/(F) companion rules including the parallel and cable-tray arrangements, voltage drop (both methods), motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
 
 ---
 

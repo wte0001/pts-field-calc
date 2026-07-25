@@ -7,7 +7,9 @@
       "250.122(A)": "The EGC need not be larger than the circuit conductors supplying the equipment.",
       "250.122(B)": "Where ungrounded conductors are increased in size from the minimum size that has sufficient ampacity for the intended installation, the EGC shall be increased in size proportionately to the circular-mil area of the ungrounded conductors.",
       "250.122(D)": "For motor circuits the EGC is sized on the branch-circuit short-circuit and ground-fault protective device rating, subject to 250.122(A).",
-      "250.122(F)": "Where conductors are run in parallel in multiple raceways, a full-size EGC sized per this table is required in EACH raceway - the EGC is not divided among the raceways.",
+      "250.122(F)": "Parallel conductors. Where the parallel sets are installed in SEPARATE raceways or cables, a full-size EGC sized per this table is required in EACH raceway or cable - the EGC is not divided among the raceways. Where all the parallel conductors share a SINGLE raceway, auxiliary gutter, or cable tray, one EGC sized per this table is permitted for the whole group.",
+      "250.122(F) tray allowance": "Where multiconductor cables are installed in parallel in the same cable tray (or raceway/auxiliary gutter), a SINGLE full-size EGC sized per this table is permitted for the group, installed in the tray and bonded together with the EGCs inside the individual cables. Each parallel multiconductor cable therefore does not need its own full-size EGC. SUBDIVISION NUMBERING UNVERIFIED - 250.122(F) was reorganized in recent code cycles; confirm the exact subdivision in the printed edition.",
+      "392.60": "Separately, a metallic cable tray system may itself serve as the EGC where it meets the conditions in 392.60 (including the minimum metal cross-sectional area in Table 392.60(A), qualified-persons servicing, marking, and bonded sections/fittings). UNVERIFIED - confirm against the printed article.",
       "250.120(B)": "Aluminum EGCs are not permitted in direct contact with masonry or earth, in corrosive conditions, or within 18 in. of earth."
     }
   },

@@ -16,6 +16,7 @@ export default function WireSizeTool() {
   const [ccc, setCcc] = useState('3')
   const [ocpd, setOcpd] = useState('')
   const [egcMaterial, setEgcMaterial] = useState('copper')
+  const [pickedRuns, setPickedRuns] = useState(null)
 
   const result = useMemo(() => {
     const a = parseFloat(amps)
@@ -35,15 +36,42 @@ export default function WireSizeTool() {
   const suggestedOcpd = useMemo(() => nextStandardOcpd(parseFloat(amps)), [amps])
   const ocpdUsed = ocpd !== '' ? parseFloat(ocpd) : suggestedOcpd
 
+  // Which makeup the EGC is sized for. A picked parallel row wins; otherwise the
+  // single conductor, falling back to the fewest-runs parallel option when no single
+  // conductor is adequate (large feeders, where an EGC is still very much needed).
+  const config = useMemo(() => {
+    if (!result) return null
+    const picked = result.parallel && pickedRuns !== null
+      ? result.parallel.find(o => o.runs === pickedRuns)
+      : null
+    if (picked) {
+      return { sets: picked.runs, size: picked.size, minSize: picked.minSize, label: `${picked.runs} sets of ${sizeLabel(picked.size)}` }
+    }
+    if (!result.error) {
+      return {
+        sets: 1,
+        size: result.size,
+        minSize: result.hardToGetSkipped ? result.hardToGetSkipped.size : result.size,
+        label: `single ${sizeLabel(result.size)}`
+      }
+    }
+    if (result.parallel) {
+      const o = result.parallel[0]
+      return { sets: o.runs, size: o.size, minSize: o.minSize, label: `${o.runs} sets of ${sizeLabel(o.size)}`, assumed: true }
+    }
+    return null
+  }, [result, pickedRuns])
+
   const egc = useMemo(() => {
-    if (!result || result.error || !Number.isFinite(ocpdUsed)) return null
+    if (!config || !Number.isFinite(ocpdUsed)) return null
     return groundConductor({
       ocpdAmps: ocpdUsed,
       material: egcMaterial,
-      circuitSize: result.size,
-      minAmpacitySize: result.hardToGetSkipped ? result.hardToGetSkipped.size : result.size
+      circuitSize: config.size,
+      minAmpacitySize: config.minSize,
+      sets: config.sets
     })
-  }, [result, ocpdUsed, egcMaterial])
+  }, [config, ocpdUsed, egcMaterial])
 
   return (
     <div>
@@ -109,9 +137,14 @@ export default function WireSizeTool() {
         </div>
       )}
 
-      {result && !result.error && (
+      {config && (
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Equipment grounding conductor — Table 250.122</h3>
+          <div className="cite" style={{ marginTop: 0, marginBottom: 8 }}>
+            Sized for: <b>{config.label}</b>
+            {config.assumed ? ' (fewest-runs option — tap another row below to change)' : ''}
+            {config.sets > 1 && !config.assumed ? ' (tap another row below to change)' : ''}
+          </div>
 
           <label className="fld" htmlFor="ws-ocpd">
             Overcurrent device rating (A){ocpd === '' && suggestedOcpd ? ` — assuming ${suggestedOcpd} A` : ''}
@@ -131,7 +164,8 @@ export default function WireSizeTool() {
           {egc && !egc.error && (
             <>
               <div className="bigval" style={{ marginTop: 12 }}>
-                {sizeLabel(egc.size)}<span className="unit"> {egc.material} EGC</span>
+                {egc.sets > 1 ? `${egc.sets} × ` : ''}{sizeLabel(egc.size)}
+                <span className="unit"> {egc.material} EGC{egc.sets > 1 ? ' (separate raceways)' : ''}</span>
               </div>
               <table className="kv">
                 <tbody>
@@ -156,6 +190,23 @@ export default function WireSizeTool() {
                 </tbody>
               </table>
               {egc.notes.map((n, i) => <div className="warn" key={i}>{n}</div>)}
+
+              {egc.parallelGuidance.length > 0 && (
+                <>
+                  <h3>Permitted EGC arrangements for {egc.sets} parallel sets</h3>
+                  <table className="kv">
+                    <tbody>
+                      {egc.parallelGuidance.map((g, i) => (
+                        <tr key={i}>
+                          <td>{g.arrangement}<br /><em>{g.rule}</em></td>
+                          <td>{g.text}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
               <div className="cite">
                 Source: {egc.table}, sized on the overcurrent device rating — not on the conductor size.
                 This tool does not select the overcurrent device: continuous-load factors (210.19/215.2),
@@ -176,8 +227,11 @@ export default function WireSizeTool() {
               <tr><th>Runs/phase</th><th>Conductor</th><th>Per run</th><th>Total</th></tr>
             </thead>
             <tbody>
-              {result.parallel.map((o, i) => (
-                <tr key={o.runs} className={i === 0 ? 'sel' : ''}>
+              {result.parallel.map(o => (
+                <tr key={o.runs}
+                  className={config && config.sets === o.runs ? 'sel' : ''}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setPickedRuns(o.runs)}>
                   <td>{o.runs}×</td>
                   <td>{sizeLabel(o.size)}</td>
                   <td>{o.deratedAmpacity} A</td>
@@ -186,8 +240,15 @@ export default function WireSizeTool() {
               ))}
             </tbody>
           </table>
+          {!result.error && pickedRuns !== null && (
+            <div className="btn-row">
+              <button className="btn secondary" onClick={() => setPickedRuns(null)}>
+                Use single {sizeLabel(result.size)} instead
+              </button>
+            </div>
+          )}
           <div className="cite">
-            Shown for loads above {PARALLEL_SUGGEST_AMPS} A; fewest-runs option highlighted.
+            Shown for loads above {PARALLEL_SUGGEST_AMPS} A. Tap a row to size the EGC for that makeup.
             Per NEC 310.10(G): 1/0 AWG minimum, all runs identical size, material, length, and termination.
             Per 250.122(F), each raceway needs its own full-size EGC from the table above — not divided among runs.
             PTS practice: parallel conductors capped at 750 kcmil, up to 16 sets.

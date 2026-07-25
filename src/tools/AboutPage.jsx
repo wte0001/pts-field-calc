@@ -71,9 +71,24 @@ export default function AboutPage() {
           tool shows the arithmetic. Voltage-drop upsizing does the same in real designs — a step
           commonly missed.</li>
         <li><b>250.122(A)</b> — the EGC is never required to exceed the circuit conductor size.</li>
-        <li><b>250.122(F)</b> — parallel runs need a full-size EGC in <em>each</em> raceway; it is not
-          divided among the runs.</li>
+        <li><b>250.122(F)</b> — parallel runs. The EGC is sized on the device rating and is never
+          divided among the runs. The tool lists the permitted arrangements: a full-size EGC in
+          <em>each</em> separate raceway or cable; <em>or</em> a single EGC for the group where all the
+          parallel conductors share one raceway, auxiliary gutter, or cable tray; <em>or</em>, for
+          parallel multiconductor cables in a common cable tray, <b>one standalone EGC run in the tray</b>,
+          bonded together with the grounds inside the individual cables — so each cable does not need
+          its own full-size EGC. Separately, <b>392.60</b> permits a metallic tray system itself to serve
+          as the EGC where it meets that article (minimum metal cross-section per Table 392.60(A),
+          qualified-persons servicing, marking, bonded sections and fittings).
+          <b> The subdivision numbering under 250.122(F) was reorganized in recent code cycles — confirm
+          it against your edition (VERIFICATION.md section 11).</b></li>
       </ul>
+      <p>
+        Tap any row of the parallel-runs table to size the EGC for that makeup. For large feeders where
+        no single conductor is adequate, the EGC section still appears and sizes against the fewest-runs
+        option. Note the EGC follows the <em>device</em> rating, not the per-run current: a 1200 A feeder
+        split three ways still needs 3/0 copper in each raceway, not the 1 AWG a 400 A share would suggest.
+      </p>
       <p>
         Aluminum EGCs carry the 250.120(B) restriction (not in contact with masonry or earth, not in
         corrosive conditions, not within 18 in. of earth). Grounded (neutral) conductors and

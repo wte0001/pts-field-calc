@@ -93,8 +93,8 @@ describe('wire size - hard-to-get sizes and parallel runs', () => {
   it('parallel options above 420 A: 430 A offers 2x 4/0 then 3x 1/0 and stops at the 1/0 floor', () => {
     const r = selectWireSize(430, 'copper', 75)
     expect(r.parallel).toEqual([
-      { runs: 2, size: '4/0', baseAmpacity: 230, deratedAmpacity: 230, totalAmpacity: 460 },
-      { runs: 3, size: '1/0', baseAmpacity: 150, deratedAmpacity: 150, totalAmpacity: 450 }
+      { runs: 2, size: '4/0', minSize: '4/0', baseAmpacity: 230, deratedAmpacity: 230, totalAmpacity: 460 },
+      { runs: 3, size: '1/0', minSize: '1/0', baseAmpacity: 150, deratedAmpacity: 150, totalAmpacity: 450 }
     ])
   })
   it('parallel picks avoid hard-to-get sizes and apply derating factors', () => {
@@ -107,7 +107,7 @@ describe('wire size - hard-to-get sizes and parallel runs', () => {
   it('offers parallel options even when no single conductor is adequate', () => {
     const r = selectWireSize(800, 'copper', 75)
     expect(r.error).toBeTruthy()
-    expect(r.parallel[0]).toEqual({ runs: 2, size: '600', baseAmpacity: 420, deratedAmpacity: 420, totalAmpacity: 840 })
+    expect(r.parallel[0]).toEqual({ runs: 2, size: '600', minSize: '600', baseAmpacity: 420, deratedAmpacity: 420, totalAmpacity: 840 })
     // 3 runs: 266.7 A/run - 300 kcmil skipped as hard to get, 350 (310 A) selected
     expect(r.parallel[1].size).toBe('350')
   })
@@ -115,15 +115,36 @@ describe('wire size - hard-to-get sizes and parallel runs', () => {
     const r = selectWireSize(5000, 'copper', 75)
     expect(r.error).toBeTruthy() // no single conductor
     expect(r.parallel).toEqual([
-      { runs: 11, size: '750', baseAmpacity: 475, deratedAmpacity: 475, totalAmpacity: 5225 },
-      { runs: 12, size: '600', baseAmpacity: 420, deratedAmpacity: 420, totalAmpacity: 5040 },
-      { runs: 14, size: '500', baseAmpacity: 380, deratedAmpacity: 380, totalAmpacity: 5320 }
+      { runs: 11, size: '750', minSize: '700', baseAmpacity: 475, deratedAmpacity: 475, totalAmpacity: 5225 },
+      { runs: 12, size: '600', minSize: '600', baseAmpacity: 420, deratedAmpacity: 420, totalAmpacity: 5040 },
+      { runs: 14, size: '500', minSize: '500', baseAmpacity: 380, deratedAmpacity: 380, totalAmpacity: 5320 }
     ])
   })
   it('parallel picks never exceed 750 kcmil per conductor', () => {
-    // 1900 A: fewest sets within the 750 kcmil cap is 4x750, not 3x2000 kcmil
+    // 1900 A: fewest sets within the 750 kcmil cap is 4x750, not 3x2000 kcmil.
+    // 475 A per run exactly matches 750 kcmil, so 750 is also the code minimum here
+    // (700 kcmil at 460 A would not cover it) — no 250.122(B) bump for this makeup.
     const r = selectWireSize(1900, 'copper', 75)
-    expect(r.parallel[0]).toEqual({ runs: 4, size: '750', baseAmpacity: 475, deratedAmpacity: 475, totalAmpacity: 1900 })
+    expect(r.parallel[0]).toEqual({ runs: 4, size: '750', minSize: '750', baseAmpacity: 475, deratedAmpacity: 475, totalAmpacity: 1900 })
+  })
+  it('parallel options report minSize — the code minimum before hard-to-get filtering', () => {
+    // 800 A: 3 runs need 266.7 A each. Code minimum is 300 kcmil (285 A), but 300 is
+    // hard to get, so the recommendation is 350. 250.122(B) measures against the 300.
+    const r = selectWireSize(800, 'copper', 75)
+    const three = r.parallel.find(o => o.runs === 3)
+    expect(three.size).toBe('350')
+    expect(three.minSize).toBe('300')
+    // Where no hard-to-get size intervenes, minSize equals the recommended size.
+    const two = r.parallel.find(o => o.runs === 2)
+    expect(two.size).toBe('600')
+    expect(two.minSize).toBe('600')
+  })
+  it('5000 A parallel options carry minSize for every row', () => {
+    const r = selectWireSize(5000, 'copper', 75)
+    r.parallel.forEach(o => expect(typeof o.minSize).toBe('string'))
+    // 11 runs = 454.5 A each; 700 kcmil (460 A) is the code minimum, upsized to 750
+    // because 700 is hard to get — so 250.122(B) applies to this makeup.
+    expect(r.parallel.find(o => o.runs === 11).minSize).toBe('700')
   })
   it('returns null parallel when the load exceeds 16 sets of 750 kcmil', () => {
     const r = selectWireSize(99999, 'copper', 90)

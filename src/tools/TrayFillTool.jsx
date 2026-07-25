@@ -72,6 +72,11 @@ export default function TrayFillTool() {
         Aluminum ladder tray, 6 in. loading depth, NEMA VE 1 Class 20C (labels only — fill is governed by width).
         Cables: multiconductor Type TC-ER, 3/C + ground, Cu, 600V.
       </div>
+      <div className="note" style={{ background: '#e7eef6', color: '#27415f', marginBottom: 10 }}>
+        Grounding for parallel cables in one tray: per 250.122(F), a single standalone EGC in the tray
+        (sized on the overcurrent device, bonded to the cables' own grounds) is permitted for the group —
+        each parallel cable does not need its own full-size EGC. Size it on the Wire tab.
+      </div>
 
       {/* Result panel - always visible, on top so it's seen while editing */}
       {result.error

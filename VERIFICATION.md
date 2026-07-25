@@ -108,7 +108,12 @@ Remaining risk is narrow: the primary text read was the **2017** edition; second
 - [ ] Verify the companion rules as implemented in `src/calc/groundWire.js` and described on the About page:
   - [ ] 250.122(A) — EGC need not exceed the circuit conductors (app caps it)
   - [ ] 250.122(B) — proportional increase by circular-mil area when ungrounded conductors are upsized (app computes it, including for its own hard-to-get-size upsizing)
-  - [ ] 250.122(F) — full-size EGC in each parallel raceway (app shows a note only)
+  - [ ] 250.122(F) — parallel runs (app sizes on the device rating, never divides the EGC, and lists the permitted arrangements). Verify each arrangement the app presents:
+    - [ ] full-size EGC in **each** separate raceway or cable
+    - [ ] a **single** EGC permitted where all parallel conductors share one raceway, auxiliary gutter, or cable tray
+    - [ ] for parallel **multiconductor cables in a common cable tray**, a single standalone EGC in the tray bonded to the cables' internal EGCs, so each cable needs no full-size EGC of its own
+    - [ ] **CONFIRM THE SUBDIVISION NUMBERING.** 250.122(F) was reorganized in recent code cycles; the app cites it as plain "250.122(F)" and flags the tray allowance as numbering-unverified rather than guessing at a subdivision letter. Pin down the correct citation for the 2023 edition and update `src/data/nec_250_122.json`.
+  - [ ] 392.60 — metallic cable tray used as the EGC (app shows a note only, citing Table 392.60(A) for minimum metal cross-sectional area). Verify the article/table numbers and the conditions summarized. Also referenced in a note on the Tray Fill tool.
   - [ ] 250.120(B) — aluminum EGC restrictions (app shows a note only)
 
 ## 12. `src/data/nec_ch9_table8_cmil.json` — Chapter 9 Table 8 circular mils

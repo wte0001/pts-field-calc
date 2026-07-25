@@ -33,15 +33,23 @@ const isCommon = size => !UNCOMMON_SIZES.includes(size)
  * 310.10(G)) whose derated ampacity covers load/runs. Higher run counts are only
  * listed when they drop to a smaller conductor; options stop at the 1/0 floor or
  * MAX_PARALLEL_RUNS sets.
- * @returns array of {runs, size, baseAmpacity, deratedAmpacity, totalAmpacity} or null
+ * Each option also reports minSize: the smallest per-run size with sufficient
+ * ampacity WITHOUT the hard-to-get filter. That is the "minimum size that has
+ * sufficient ampacity" baseline NEC 250.122(B) measures EGC upsizing against, so
+ * the ground-conductor calc needs it whenever stock preference forced a bigger pull.
+ * @returns array of {runs, size, minSize, baseAmpacity, deratedAmpacity, totalAmpacity} or null
  */
 function parallelOptions(amps, candidates) {
   const startIdx = candidates.findIndex(c => c.size === MIN_PARALLEL_SIZE)
   if (startIdx === -1) return null
   const endIdx = candidates.findIndex(c => c.size === MAX_PARALLEL_SIZE)
-  const pool = candidates
+  // Same slice for both pools: 1/0 floor per 310.10(G), 750 kcmil ceiling per PTS
+  // practice. fullPool keeps hard-to-get sizes so minSize is the true code minimum.
+  const slice = candidates
     .slice(startIdx, endIdx === -1 ? undefined : endIdx + 1)
-    .filter(c => c.derated !== null && isCommon(c.size))
+    .filter(c => c.derated !== null)
+  const fullPool = slice
+  const pool = slice.filter(c => isCommon(c.size))
   if (pool.length === 0) return null
 
   const biggest = pool[pool.length - 1]
@@ -57,9 +65,11 @@ function parallelOptions(amps, candidates) {
     if (poolIdx >= lastPoolIdx) continue // same or bigger conductor than fewer runs - strictly worse
     lastPoolIdx = poolIdx
     const pick = pool[poolIdx]
+    const minEntry = fullPool.find(c => c.derated >= perRun) || pick
     options.push({
       runs,
       size: pick.size,
+      minSize: minEntry.size,
       baseAmpacity: pick.base,
       deratedAmpacity: round1(pick.derated),
       totalAmpacity: round1(pick.derated * runs)
