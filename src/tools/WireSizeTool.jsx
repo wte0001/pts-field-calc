@@ -137,13 +137,54 @@ export default function WireSizeTool() {
         </div>
       )}
 
+      {result && result.parallel && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Load-carrying conductors — parallel run options, {result.amps} A</h3>
+          <table className="widthtable">
+            <thead>
+              <tr><th>Runs/phase</th><th>Conductor</th><th>Per run</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              {result.parallel.map(o => (
+                <tr key={o.runs}
+                  className={config && config.sets === o.runs ? 'sel' : ''}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setPickedRuns(o.runs)}>
+                  <td>{o.runs}×</td>
+                  <td>{sizeLabel(o.size)}</td>
+                  <td>{o.deratedAmpacity} A</td>
+                  <td>{o.totalAmpacity} A</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!result.error && pickedRuns !== null && (
+            <div className="btn-row">
+              <button className="btn secondary" onClick={() => setPickedRuns(null)}>
+                Use single {sizeLabel(result.size)} instead
+              </button>
+            </div>
+          )}
+          <div className="cite">
+            These are the <b>phase (load-carrying) conductors</b> — the grounding conductor is sized
+            separately below. Shown for loads above {PARALLEL_SUGGEST_AMPS} A. Tap a row to size the EGC
+            for that makeup.
+            Per NEC 310.10(G): 1/0 AWG minimum, all runs identical size, material, length, and termination.
+            PTS practice: parallel conductors capped at 750 kcmil, up to 16 sets.
+            Assumes each run in its own raceway with the same correction factors applied.
+            Hard-to-get sizes ({UNCOMMON_SIZES.map(sizeLabel).join(', ')}) are not recommended.
+          </div>
+        </div>
+      )}
+
       {config && (
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Equipment grounding conductor — Table 250.122</h3>
           <div className="cite" style={{ marginTop: 0, marginBottom: 8 }}>
+            The grounding conductor, <b>in addition to</b> the phase conductors above.
             Sized for: <b>{config.label}</b>
-            {config.assumed ? ' (fewest-runs option — tap another row below to change)' : ''}
-            {config.sets > 1 && !config.assumed ? ' (tap another row below to change)' : ''}
+            {config.assumed ? ' (fewest-runs option — tap another row in the table above to change)' : ''}
+            {config.sets > 1 && !config.assumed ? ' (tap another row in the table above to change)' : ''}
           </div>
 
           <label className="fld" htmlFor="ws-ocpd">
@@ -219,44 +260,6 @@ export default function WireSizeTool() {
         </div>
       )}
 
-      {result && result.parallel && (
-        <div className="card">
-          <h3 style={{ marginTop: 0 }}>Parallel run options — {result.amps} A</h3>
-          <table className="widthtable">
-            <thead>
-              <tr><th>Runs/phase</th><th>Conductor</th><th>Per run</th><th>Total</th></tr>
-            </thead>
-            <tbody>
-              {result.parallel.map(o => (
-                <tr key={o.runs}
-                  className={config && config.sets === o.runs ? 'sel' : ''}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setPickedRuns(o.runs)}>
-                  <td>{o.runs}×</td>
-                  <td>{sizeLabel(o.size)}</td>
-                  <td>{o.deratedAmpacity} A</td>
-                  <td>{o.totalAmpacity} A</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!result.error && pickedRuns !== null && (
-            <div className="btn-row">
-              <button className="btn secondary" onClick={() => setPickedRuns(null)}>
-                Use single {sizeLabel(result.size)} instead
-              </button>
-            </div>
-          )}
-          <div className="cite">
-            Shown for loads above {PARALLEL_SUGGEST_AMPS} A. Tap a row to size the EGC for that makeup.
-            Per NEC 310.10(G): 1/0 AWG minimum, all runs identical size, material, length, and termination.
-            Per 250.122(F), each raceway needs its own full-size EGC from the table above — not divided among runs.
-            PTS practice: parallel conductors capped at 750 kcmil, up to 16 sets.
-            Assumes each run in its own raceway with the same correction factors applied.
-            Hard-to-get sizes ({UNCOMMON_SIZES.map(sizeLabel).join(', ')}) are not recommended.
-          </div>
-        </div>
-      )}
     </div>
   )
 }
