@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from 'react'
 import { selectWireSize, UNCOMMON_SIZES, PARALLEL_SUGGEST_AMPS } from '../calc/wireSize.js'
+import { groundConductor, nextStandardOcpd } from '../calc/groundWire.js'
 
-const KCMIL = ['250', '300', '350', '400', '500', '600', '700', '750', '800', '900', '1000', '1250', '1500', '1750', '2000']
-const sizeLabel = s => KCMIL.includes(s) ? `${s} kcmil` : `${s} AWG`
+// Sizes are AWG below 250 and kcmil at 250 and above; AWG names like "4/0" are not
+// plain digits. Numeric test rather than a hardcoded list so EGC sizes from
+// Table 250.122 (which reaches 1200 kcmil) label correctly too.
+const sizeLabel = s => (/^\d+$/.test(s) && parseInt(s, 10) >= 250) ? `${s} kcmil` : `${s} AWG`
 
 export default function WireSizeTool() {
   const [amps, setAmps] = useState('')
@@ -11,6 +14,8 @@ export default function WireSizeTool() {
   const [useAdv, setUseAdv] = useState(false)
   const [ambient, setAmbient] = useState('30')
   const [ccc, setCcc] = useState('3')
+  const [ocpd, setOcpd] = useState('')
+  const [egcMaterial, setEgcMaterial] = useState('copper')
 
   const result = useMemo(() => {
     const a = parseFloat(amps)
@@ -24,6 +29,21 @@ export default function WireSizeTool() {
     }
     return selectWireSize(a, material, temp, adv)
   }, [amps, material, temp, useAdv, ambient, ccc])
+
+  // OCPD defaults to the next standard rating at or above the load (240.6(A)) until
+  // the user types one. Table 250.122 keys off the device rating, not the conductor.
+  const suggestedOcpd = useMemo(() => nextStandardOcpd(parseFloat(amps)), [amps])
+  const ocpdUsed = ocpd !== '' ? parseFloat(ocpd) : suggestedOcpd
+
+  const egc = useMemo(() => {
+    if (!result || result.error || !Number.isFinite(ocpdUsed)) return null
+    return groundConductor({
+      ocpdAmps: ocpdUsed,
+      material: egcMaterial,
+      circuitSize: result.size,
+      minAmpacitySize: result.hardToGetSkipped ? result.hardToGetSkipped.size : result.size
+    })
+  }, [result, ocpdUsed, egcMaterial])
 
   return (
     <div>
@@ -89,6 +109,65 @@ export default function WireSizeTool() {
         </div>
       )}
 
+      {result && !result.error && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Equipment grounding conductor — Table 250.122</h3>
+
+          <label className="fld" htmlFor="ws-ocpd">
+            Overcurrent device rating (A){ocpd === '' && suggestedOcpd ? ` — assuming ${suggestedOcpd} A` : ''}
+          </label>
+          <input id="ws-ocpd" type="number" inputMode="decimal" min="0"
+            placeholder={suggestedOcpd ? `e.g. ${suggestedOcpd}` : 'e.g. 400'}
+            value={ocpd} onChange={e => setOcpd(e.target.value)} />
+
+          <label className="fld">EGC material</label>
+          <div className="seg" role="group" aria-label="EGC material">
+            <button className={egcMaterial === 'copper' ? 'on' : ''} onClick={() => setEgcMaterial('copper')}>Copper</button>
+            <button className={egcMaterial === 'aluminum' ? 'on' : ''} onClick={() => setEgcMaterial('aluminum')}>Aluminum</button>
+          </div>
+
+          {egc && egc.error && <div className="err">{egc.error}</div>}
+
+          {egc && !egc.error && (
+            <>
+              <div className="bigval" style={{ marginTop: 12 }}>
+                {sizeLabel(egc.size)}<span className="unit"> {egc.material} EGC</span>
+              </div>
+              <table className="kv">
+                <tbody>
+                  <tr>
+                    <td>Table 250.122 row</td>
+                    <td>{egc.tableRating} A device → {sizeLabel(egc.baseSize)} {egc.material}</td>
+                  </tr>
+                  {egc.proportional && egc.proportional.size && (
+                    <tr>
+                      <td>250.122(B) increase <em>(derived)</em></td>
+                      <td>
+                        {egc.proportional.fromSize} → {egc.proportional.toSize} is ×{egc.proportional.ratio} by circular mils,
+                        so {sizeLabel(egc.baseSize)} × {egc.proportional.ratio} = {egc.proportional.neededCmil.toLocaleString()} cmil
+                        → <b>{sizeLabel(egc.proportional.size)}</b>
+                      </td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td>Device rating used</td>
+                    <td>{egc.ocpdAmps} A {ocpd === '' ? <em>(assumed — next standard rating ≥ load per 240.6(A))</em> : ''}</td>
+                  </tr>
+                </tbody>
+              </table>
+              {egc.notes.map((n, i) => <div className="warn" key={i}>{n}</div>)}
+              <div className="cite">
+                Source: {egc.table}, sized on the overcurrent device rating — not on the conductor size.
+                This tool does not select the overcurrent device: continuous-load factors (210.19/215.2),
+                240.4 small-conductor rules, and motor rules (430.52, with the EGC then per 250.122(D))
+                all govern that choice. Grounded (neutral) and grounding-electrode conductors are different
+                conductors sized by different rules (200.x, 250.102, 250.66) and are not covered here.
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {result && result.parallel && (
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Parallel run options — {result.amps} A</h3>
@@ -110,6 +189,7 @@ export default function WireSizeTool() {
           <div className="cite">
             Shown for loads above {PARALLEL_SUGGEST_AMPS} A; fewest-runs option highlighted.
             Per NEC 310.10(G): 1/0 AWG minimum, all runs identical size, material, length, and termination.
+            Per 250.122(F), each raceway needs its own full-size EGC from the table above — not divided among runs.
             PTS practice: parallel conductors capped at 750 kcmil, up to 16 sets.
             Assumes each run in its own raceway with the same correction factors applied.
             Hard-to-get sizes ({UNCOMMON_SIZES.map(sizeLabel).join(', ')}) are not recommended.

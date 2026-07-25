@@ -103,9 +103,16 @@ describe('voltage drop - K-factor method', () => {
     const three = voltageDropKFactor({ amps: 900, lengthFt: 300, voltage: 480, phase: 3, size: '500', material: 'copper', sets: 3 })
     expect(three.vdVolts).toBeCloseTo(one.vdVolts / 3, 6)
   })
-  it('errors on 14 AWG aluminum and unknown sizes', () => {
+  it('errors on 14 AWG aluminum and sizes absent from Table 8', () => {
     expect(voltageDropKFactor({ amps: 10, lengthFt: 50, voltage: 120, phase: 1, size: '14', material: 'aluminum', sets: 1 }).error).toBeTruthy()
-    expect(voltageDropKFactor({ amps: 10, lengthFt: 50, voltage: 120, phase: 1, size: '900', material: 'copper', sets: 1 }).error).toBeTruthy()
+    expect(voltageDropKFactor({ amps: 10, lengthFt: 50, voltage: 120, phase: 1, size: '5000', material: 'copper', sets: 1 }).error).toBeTruthy()
+  })
+  it('accepts Table 8 sizes that Table 9 omits (K needs only circular mils)', () => {
+    // 900 kcmil is in Table 8 but not Table 9, so it works for K-factor though the
+    // UI only offers Table 9 sizes. The Table 9 method still rejects it.
+    const r = voltageDropKFactor({ amps: 400, lengthFt: 200, voltage: 480, phase: 3, size: '900', material: 'copper', sets: 1 })
+    expect(r.error).toBeUndefined()
+    expect(r.cmil).toBe(900000)
   })
 })
 

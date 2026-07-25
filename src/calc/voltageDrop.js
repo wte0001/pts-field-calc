@@ -13,6 +13,7 @@
 // conductors near unity PF, increasingly wrong above ~4/0.
 
 import t9 from '../data/nec_ch9_table9.json'
+import table8 from '../data/nec_ch9_table8_cmil.json'
 
 const SQRT3 = Math.sqrt(3)
 
@@ -98,7 +99,7 @@ export function voltageDropKFactor(p) {
   if (bad) return { error: bad }
   const k = K_FACTORS[p.material]
   if (!k) return { error: 'Unknown conductor material.' }
-  const cmil = t9.circularMils[p.size]
+  const cmil = table8.cmil[p.size]
   if (!cmil) return { error: `${p.size} is not in the circular-mil table.` }
   if (p.material === 'aluminum' && p.size === '14') {
     return { error: '14 AWG aluminum is not listed.' }

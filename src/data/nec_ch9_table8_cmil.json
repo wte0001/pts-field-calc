@@ -1,0 +1,38 @@
+{
+  "_meta": {
+    "source": "NEC Chapter 9, Table 8 (Conductor Properties) - conductor area in circular mils.",
+    "caveat": "The 13 AWG values (14 through 4/0) are printed digits and were verified 2026-07-19 against primary reproductions of the 2017 NEC table text plus Southwire and Okonite engineering handbooks, zero discrepancies. For kcmil-named sizes the NEC prints a dash in the circular-mil column - the size name IS the area - so those entries are definitional (kcmil x 1000), not transcriptions.",
+    "notes": "Relocated 2026-07-19 out of nec_ch9_table9.json (same verified values) so one file owns one table, and extended past 1000 kcmil: Table 8 lists 700/800/900/1250/1500/1750/2000 kcmil even though Table 9 does not. Used by the voltage-drop K-factor method and by the NEC 250.122(B) proportional EGC increase."
+  },
+  "sizes": ["14", "12", "10", "8", "6", "4", "3", "2", "1", "1/0", "2/0", "3/0", "4/0", "250", "300", "350", "400", "500", "600", "700", "750", "800", "900", "1000", "1250", "1500", "1750", "2000"],
+  "cmil": {
+    "14": 4110,
+    "12": 6530,
+    "10": 10380,
+    "8": 16510,
+    "6": 26240,
+    "4": 41740,
+    "3": 52620,
+    "2": 66360,
+    "1": 83690,
+    "1/0": 105600,
+    "2/0": 133100,
+    "3/0": 167800,
+    "4/0": 211600,
+    "250": 250000,
+    "300": 300000,
+    "350": 350000,
+    "400": 400000,
+    "500": 500000,
+    "600": 600000,
+    "700": 700000,
+    "750": 750000,
+    "800": 800000,
+    "900": 900000,
+    "1000": 1000000,
+    "1250": 1250000,
+    "1500": 1500000,
+    "1750": 1750000,
+    "2000": 2000000
+  }
+}

@@ -7,6 +7,7 @@ import App from '../../App.jsx'
 import PowerConvertTool from '../PowerConvertTool.jsx'
 import HeatRejectTool from '../HeatRejectTool.jsx'
 import VoltageDropTool from '../VoltageDropTool.jsx'
+import WireSizeTool from '../WireSizeTool.jsx'
 import AboutPage from '../AboutPage.jsx'
 
 describe('render smoke tests', () => {
@@ -15,6 +16,12 @@ describe('render smoke tests', () => {
     for (const label of ['Wire', 'VDrop', 'Motor', 'Conduit', 'Tray', 'Power', 'Heat', 'About']) {
       expect(html).toContain(label)
     }
+  })
+  it('Wire size tool renders, and the EGC card appears only once a load is entered', () => {
+    const html = renderToStaticMarkup(React.createElement(WireSizeTool))
+    expect(html).toContain('Wire Size')
+    // No load current by default -> no result, so no EGC section yet
+    expect(html).not.toContain('Equipment grounding conductor')
   })
   it('Voltage drop tool renders with defaults', () => {
     const html = renderToStaticMarkup(React.createElement(VoltageDropTool))

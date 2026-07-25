@@ -1,6 +1,6 @@
 # PTS Field Calc
 
-A phone-friendly NEC reference calculator for field use: wire size (Table 310.16), voltage drop (Chapter 9 Table 9 or K-factor), motor FLC (Table 430.250), conduit fill (Chapter 9), cable tray fill (392.22(A)), a kVA / A / kW power converter, and an equipment heat-rejection estimator for HVAC loads. Works fully offline after the first load. No server, no accounts, no data leaves the phone.
+A phone-friendly NEC reference calculator for field use: wire size (Table 310.16) with equipment grounding conductor sizing (Table 250.122), voltage drop (Chapter 9 Table 9 or K-factor), motor FLC (Table 430.250), conduit fill (Chapter 9), cable tray fill (392.22(A)), a kVA / A / kW power converter, and an equipment heat-rejection estimator for HVAC loads. Works fully offline after the first load. No server, no accounts, no data leaves the phone.
 
 **Reference tool only. Verify against the NEC and stamped calculations. Complete VERIFICATION.md before giving this to the team.**
 
@@ -61,7 +61,7 @@ To stop it: click in the terminal and press `Ctrl+C`.
 npm test
 ```
 
-You should see all tests pass (99 of them, covering the tray fill cases, wire sizing (including hard-to-get size skipping and parallel-run suggestions), voltage drop (both methods), motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
+You should see all tests pass (120 of them, covering the tray fill cases, wire sizing (including hard-to-get size skipping and parallel-run suggestions), EGC sizing with the 250.122(A)/(B)/(F) companion rules, voltage drop (both methods), motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
 
 ---
 

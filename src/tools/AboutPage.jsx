@@ -19,6 +19,8 @@ export default function AboutPage() {
         <li><b>Table 310.16</b> — conductor ampacity (Wire Size tool)</li>
         <li><b>Table 310.15(B)(1)(1)</b> — ambient temperature correction, 30°C base (Wire Size, advanced)</li>
         <li><b>Table 310.15(C)(1)</b> — adjustment for more than three current-carrying conductors (Wire Size, advanced)</li>
+        <li><b>Table 250.122</b> — minimum equipment grounding conductor size (Wire Size tool)</li>
+        <li><b>240.6(A)</b> — standard overcurrent device ratings (Wire Size tool, EGC section)</li>
         <li><b>Table 430.250</b> — three-phase motor full-load current (Motor FLC tool)</li>
         <li><b>Chapter 9, Table 9</b> — AC resistance and reactance for 600V conductors (Voltage Drop tool)</li>
         <li><b>Chapter 9, Table 8</b> — conductor circular mils (Voltage Drop tool, K-factor method)</li>
@@ -52,6 +54,32 @@ export default function AboutPage() {
         length, and terminations, each run assumed in its own raceway with the same correction factors.
         Parallel picks are capped at 750 kcmil per conductor and 16 sets per phase (PTS pulling and
         termination practice) — e.g. a 5000 A load suggests 11 sets of 750 kcmil copper.
+      </p>
+
+      <h3>Equipment grounding conductor (Wire Size tool)</h3>
+      <p>
+        The EGC is sized from <b>Table 250.122 on the overcurrent device rating</b>, not on the
+        conductor size — so the Wire Size tool asks for the device rating, defaulting to the next
+        standard rating at or above the load per 240.6(A). <b>That default is a convenience, not a
+        device selection:</b> continuous-load factors, 240.4 small-conductor rules, and motor rules
+        (430.52) all govern the real choice. Three companion rules are applied automatically:
+      </p>
+      <ul>
+        <li><b>250.122(B)</b> — when the ungrounded conductors are increased above the minimum size
+          with sufficient ampacity, the EGC increases proportionally by circular-mil area. Because
+          this app skips hard-to-get sizes (700 → 750 kcmil), that upsizing triggers the rule and the
+          tool shows the arithmetic. Voltage-drop upsizing does the same in real designs — a step
+          commonly missed.</li>
+        <li><b>250.122(A)</b> — the EGC is never required to exceed the circuit conductor size.</li>
+        <li><b>250.122(F)</b> — parallel runs need a full-size EGC in <em>each</em> raceway; it is not
+          divided among the runs.</li>
+      </ul>
+      <p>
+        Aluminum EGCs carry the 250.120(B) restriction (not in contact with masonry or earth, not in
+        corrosive conditions, not within 18 in. of earth). Grounded (neutral) conductors and
+        grounding-electrode conductors are different conductors governed by different rules
+        (250.102, 250.66) and are <b>not</b> covered. Motor circuits per 250.122(D) use the
+        branch-circuit protective device rating — enter that rating rather than the FLC.
       </p>
 
       <h3>Voltage Drop tool</h3>

@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "source": "NEC Table 250.122 - Minimum Size Equipment Grounding Conductors for Grounding Raceway and Equipment. Sized by the RATING OF THE OVERCURRENT DEVICE ahead of the circuit, not by the ungrounded conductor size.",
+    "caveat": "Entered from the author's memory and NOT independently verified. Lower confidence than the deep-research-verified Table 9 data. See VERIFICATION.md section 11 before relying on this.",
+    "notes": "Rows are looked up as 'first row whose ocpd rating is >= the device rating', which is how the table is applied. Intermediate device ratings the printed table may or may not list separately (e.g. 30 A and 40 A, which historically also mapped to 10 AWG Cu / 8 AWG Al) resolve to the same answer under that lookup, so their presence or absence does not change results. The 4000 A aluminum cell is null because the author could not choose between 750 and 800 kcmil with confidence - the app reports 'unverified' rather than guessing.",
+    "companionRules": {
+      "250.122(A)": "The EGC need not be larger than the circuit conductors supplying the equipment.",
+      "250.122(B)": "Where ungrounded conductors are increased in size from the minimum size that has sufficient ampacity for the intended installation, the EGC shall be increased in size proportionately to the circular-mil area of the ungrounded conductors.",
+      "250.122(D)": "For motor circuits the EGC is sized on the branch-circuit short-circuit and ground-fault protective device rating, subject to 250.122(A).",
+      "250.122(F)": "Where conductors are run in parallel in multiple raceways, a full-size EGC sized per this table is required in EACH raceway - the EGC is not divided among the raceways.",
+      "250.120(B)": "Aluminum EGCs are not permitted in direct contact with masonry or earth, in corrosive conditions, or within 18 in. of earth."
+    }
+  },
+  "rows": [
+    { "ocpd": 15, "copper": "14", "aluminum": "12" },
+    { "ocpd": 20, "copper": "12", "aluminum": "10" },
+    { "ocpd": 60, "copper": "10", "aluminum": "8" },
+    { "ocpd": 100, "copper": "8", "aluminum": "6" },
+    { "ocpd": 200, "copper": "6", "aluminum": "4" },
+    { "ocpd": 300, "copper": "4", "aluminum": "2" },
+    { "ocpd": 400, "copper": "3", "aluminum": "1" },
+    { "ocpd": 500, "copper": "2", "aluminum": "1/0" },
+    { "ocpd": 600, "copper": "1", "aluminum": "2/0" },
+    { "ocpd": 800, "copper": "1/0", "aluminum": "3/0" },
+    { "ocpd": 1000, "copper": "2/0", "aluminum": "4/0" },
+    { "ocpd": 1200, "copper": "3/0", "aluminum": "250" },
+    { "ocpd": 1600, "copper": "4/0", "aluminum": "350" },
+    { "ocpd": 2000, "copper": "250", "aluminum": "400" },
+    { "ocpd": 2500, "copper": "350", "aluminum": "600" },
+    { "ocpd": 3000, "copper": "400", "aluminum": "600" },
+    { "ocpd": 4000, "copper": "500", "aluminum": null },
+    { "ocpd": 5000, "copper": "700", "aluminum": "1200" },
+    { "ocpd": 6000, "copper": "800", "aluminum": "1200" }
+  ]
+}

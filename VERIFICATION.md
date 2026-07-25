@@ -96,6 +96,28 @@ Remaining risk is narrow: the primary text read was the **2017** edition; second
 - [ ] Circular mils vs. printed Table 8 (AWG sizes are printed digits; kcmil rows show a dash — the app's kcmil × 1000 entries are definitional)
 - [ ] K-factor constants (12.9 Cu / 21.2 Al Ω·cmil/ft) — research confirmed these are a Table-8-derived estimating convention appearing nowhere in the NEC text; confirm the app still labels them as such
 
+## 11. `src/data/nec_250_122.json` — Table 250.122 (minimum equipment grounding conductor)
+
+**Entered from the author's memory and NOT independently verified — treat like section 10 was before its research pass.** The EGC is sized on the **overcurrent device rating**, not the conductor size. Values are AWG/kcmil.
+
+- [ ] Copper column, all 19 rows (15 A → 14 AWG through 6000 A → 800 kcmil)
+- [ ] Aluminum column, 18 rows (15 A → 12 AWG through 6000 A → 1200 kcmil)
+- [ ] **NULL:** the 4000 A aluminum cell — author could not choose between 750 and 800 kcmil. Enter the printed value.
+- [ ] Confirm which intermediate device ratings the printed table actually lists (e.g. whether 30 A and 40 A appear as their own rows). **Functionally this does not change any answer** — the app looks up the first row at or above the device rating, so a 30 A device resolves to 10 AWG Cu either way — but confirm the row list anyway.
+- [ ] Verify the 240.6(A) standard-rating list in `src/calc/groundWire.js` (`STANDARD_OCPD`) — used only to pre-fill a suggested device rating, which the user can override.
+- [ ] Verify the companion rules as implemented in `src/calc/groundWire.js` and described on the About page:
+  - [ ] 250.122(A) — EGC need not exceed the circuit conductors (app caps it)
+  - [ ] 250.122(B) — proportional increase by circular-mil area when ungrounded conductors are upsized (app computes it, including for its own hard-to-get-size upsizing)
+  - [ ] 250.122(F) — full-size EGC in each parallel raceway (app shows a note only)
+  - [ ] 250.120(B) — aluminum EGC restrictions (app shows a note only)
+
+## 12. `src/data/nec_ch9_table8_cmil.json` — Chapter 9 Table 8 circular mils
+
+Relocated 2026-07-19 out of `nec_ch9_table9.json` (values unchanged and already research-verified — see section 10) so one file owns one table, then extended past 1000 kcmil because Table 8 lists sizes Table 9 does not.
+
+- [x] AWG values 14–4/0 — verified in the section 10 research pass (printed digits, matched primary NEC text plus Southwire and Okonite handbooks)
+- [ ] Confirm the added sizes 700, 800, 900, 1250, 1500, 1750, 2000 kcmil appear in Table 8 (research indicated they do; these entries are definitional kcmil × 1000 rather than transcribed digits)
+
 ---
 
 ## Edition caveat
@@ -115,4 +137,6 @@ The author's table knowledge is strongest from the 2017/2020 NEC cycles. No chan
 | 7. Table 392.22(A) | | |
 | 8. Southwire ODs | | |
 | 9. Heat-loss estimating defaults | | |
-| 10. Ch. 9 Table 9 / Table 8 (voltage drop) | | |
+| 10. Ch. 9 Table 9 (voltage drop) | | |
+| 11. Table 250.122 (EGC) | | |
+| 12. Ch. 9 Table 8 circular mils | | |
