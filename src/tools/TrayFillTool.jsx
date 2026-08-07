@@ -1,110 +1,154 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  trayFill, trayFillCsv, defaultOd, CABLE_SIZES, CABLE_DATA, isLargeConductor,
+  trayFill, trayFillCsv, traysCsv, defaultOd, CABLE_SIZES, CABLE_DATA, isLargeConductor,
   EGC_SIZES, EGC_INSULATIONS, egcOdFromTable5, CONTROL_SIZES, STANDARD_WIDTHS
 } from '../calc/trayFill.js'
+import * as P from '../calc/trayProject.js'
 import TrayDiagram from './TrayDiagram.jsx'
 
-const LS_KEY = 'pts-tray-circuits-v1'
-const LS_EGC_KEY = 'pts-tray-egc-v1'
+const LS_PROJECT = 'pts-tray-project-v1'
+// Pre-tabs keys. Read once to migrate, then left in place as a fallback copy.
+const LS_LEGACY_ROWS = 'pts-tray-circuits-v1'
+const LS_LEGACY_EGC = 'pts-tray-egc-v1'
+
 // Numeric test rather than a hardcoded list so EGC sizes up to 1000 kcmil label right.
 const sizeLabel = s => (/^\d+$/.test(s) && parseInt(s, 10) >= 250) ? `${s} kcmil` : `${s} AWG`
 
-let nextId = 1
-const newRow = (size = '4/0') => ({
-  id: nextId++, tag: '', size, runs: '1',
-  odIn: defaultOd(size) !== null ? String(defaultOd(size)) : ''
-})
-
-function loadRows() {
+function loadProject() {
   try {
-    const raw = localStorage.getItem(LS_KEY)
-    if (!raw) return [newRow()]
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed) || parsed.length === 0) return [newRow()]
-    return parsed.map(r => ({ ...r, id: nextId++ }))
-  } catch { return [newRow()] }
+    const raw = localStorage.getItem(LS_PROJECT)
+    if (raw) {
+      const p = P.deserialize(raw)
+      if (p) return p
+    }
+    // First run after the tabs upgrade: fold the single saved tray into tab one.
+    const legacyRows = localStorage.getItem(LS_LEGACY_ROWS)
+    const legacyEgc = localStorage.getItem(LS_LEGACY_EGC)
+    if (legacyRows || legacyEgc) {
+      return P.migrateLegacy(
+        legacyRows ? JSON.parse(legacyRows) : null,
+        legacyEgc ? JSON.parse(legacyEgc) : null
+      )
+    }
+  } catch { /* corrupt storage - fall through to a fresh project */ }
+  return P.emptyProject()
 }
 
-const DEFAULT_EGC_INS = EGC_INSULATIONS[0].id
-const newEgc = (size = '1/0', insulation = DEFAULT_EGC_INS) => {
-  const od = egcOdFromTable5(size, insulation)
-  return { on: false, size, insulation, odIn: od !== null ? String(od) : '' }
+const download = (text, mime, filename) => {
+  const url = URL.createObjectURL(new Blob([text], { type: mime }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
-function loadEgc() {
-  try {
-    const raw = localStorage.getItem(LS_EGC_KEY)
-    if (!raw) return newEgc()
-    const parsed = JSON.parse(raw)
-    return parsed && typeof parsed === 'object' ? { ...newEgc(), ...parsed } : newEgc()
-  } catch { return newEgc() }
-}
+const today = () => new Date().toISOString().slice(0, 10)
+const calcRows = rows => rows.map(r => ({
+  tag: r.tag, size: r.size, runs: parseInt(r.runs, 10), odIn: parseFloat(r.odIn)
+}))
+const calcEgcOf = egc => (egc.on ? { size: egc.size, odIn: parseFloat(egc.odIn) } : null)
 
 export default function TrayFillTool() {
-  const [rows, setRows] = useState(loadRows)
-  const [egc, setEgc] = useState(loadEgc)
+  const [project, setProject] = useState(loadProject)
   const [drawWidth, setDrawWidth] = useState(null) // null = recommended width
+  const [renaming, setRenaming] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
+  const nameRef = useRef(null)
 
   useEffect(() => {
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(rows.map(({ id, ...r }) => r)))
-    } catch { /* storage full or blocked - nonfatal */ }
-  }, [rows])
+    try { localStorage.setItem(LS_PROJECT, P.serialize(project)) } catch { /* nonfatal */ }
+  }, [project])
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(LS_EGC_KEY, JSON.stringify(egc))
-    } catch { /* storage full or blocked - nonfatal */ }
-  }, [egc])
+  useEffect(() => { if (renaming && nameRef.current) nameRef.current.select() }, [renaming])
 
-  const changeEgcSize = (size, insulation = egc.insulation) => {
-    const od = egcOdFromTable5(size, insulation)
-    setEgc(e => ({ ...e, size, insulation, odIn: od !== null ? String(od) : '' }))
-  }
+  // Every tray is evaluated, not just the active one - the roll-up needs them all.
+  const evaluated = useMemo(() => project.trays.map(t => ({
+    tray: t,
+    rows: calcRows(t.rows),
+    result: trayFill(calcRows(t.rows), calcEgcOf(t.egc))
+  })), [project.trays])
 
-  const update = (id, patch) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...patch } : r)))
-  const del = id => setRows(rs => rs.filter(r => r.id !== id))
-  const changeSize = (id, size) => {
-    const od = defaultOd(size)
-    update(id, { size, odIn: od !== null ? String(od) : '' })
+  const activeId = project.activeId
+  const current = evaluated.find(e => e.tray.id === activeId) || evaluated[0]
+  const tray = current.tray
+  const result = current.result
+  const egc = tray.egc
+
+  const pick = id => { setProject(p => P.setActive(p, id)); setDrawWidth(null); setRenaming(false) }
+  const commitName = () => { setProject(p => P.renameTray(p, tray.id, nameDraft)); setRenaming(false) }
+
+  const addTray = () => { setProject(p => P.addTray(p)); setDrawWidth(null) }
+  const duplicate = () => { setProject(p => P.duplicateTray(p, tray.id)); setDrawWidth(null) }
+  const remove = () => {
+    if (project.trays.length <= 1) return
+    if (window.confirm(`Delete "${tray.name}" and its circuit list? This cannot be undone.`)) {
+      setProject(p => P.deleteTray(p, tray.id))
+      setDrawWidth(null)
+    }
   }
   const clearAll = () => {
-    if (window.confirm('Clear the entire circuit list? This cannot be undone.')) {
-      setRows([newRow()])
+    if (window.confirm(`Clear the circuit list for "${tray.name}"? This cannot be undone.`)) {
+      setProject(p => P.clearTray(p, tray.id))
     }
   }
 
-  const calcRows = useMemo(() => rows.map(r => ({
-    tag: r.tag, size: r.size,
-    runs: parseInt(r.runs, 10),
-    odIn: parseFloat(r.odIn)
-  })), [rows])
-
-  const calcEgc = useMemo(
-    () => (egc.on ? { size: egc.size, odIn: parseFloat(egc.odIn) } : null),
-    [egc]
-  )
-
-  const result = useMemo(() => trayFill(calcRows, calcEgc), [calcRows, calcEgc])
-
   const exportCsv = () => {
     if (result.error) return
-    const csv = trayFillCsv(calcRows, result)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `tray-fill-${new Date().toISOString().slice(0, 10)}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    download(trayFillCsv(current.rows, result, tray.name), 'text/csv;charset=utf-8;',
+      `tray-fill-${tray.name.replace(/[^A-Za-z0-9]+/g, '-').toLowerCase()}-${today()}.csv`)
+  }
+  const exportAllCsv = () => {
+    download(traysCsv(evaluated.map(e => ({ name: e.tray.name, rows: e.rows, result: e.result }))),
+      'text/csv;charset=utf-8;', `tray-fill-all-trays-${today()}.csv`)
   }
 
   return (
     <div>
       <h2>Cable Tray Fill — NEC 392.22(A)</h2>
+
+      <div className="traystrip" role="tablist" aria-label="Tray designs">
+        {project.trays.map(t => {
+          const r = evaluated.find(e => e.tray.id === t.id).result
+          return (
+            <button key={t.id} role="tab" aria-selected={t.id === activeId}
+              className={t.id === activeId ? 'on' : ''} onClick={() => pick(t.id)}>
+              {t.name}
+              <span className="w">{r.error || !r.adequate ? '—' : `${r.minWidth} in`}</span>
+            </button>
+          )
+        })}
+        <button className="add" onClick={addTray} disabled={P.isFull(project)}
+          aria-label="Add tray" title={P.isFull(project) ? `Limit is ${P.MAX_TRAYS} trays` : 'Add tray'}>+</button>
+      </div>
+      <div className="traymeta">
+        {project.trays.length} of {P.MAX_TRAYS} trays · saved on this phone
+        {P.isFull(project) ? ' · limit reached' : ''}
+      </div>
+
+      {renaming ? (
+        <div className="btn-row" style={{ marginBottom: 12 }}>
+          <input ref={nameRef} type="text" value={nameDraft} maxLength={P.MAX_NAME_LEN}
+            aria-label="Tray name" style={{ flex: '1 1 140px' }}
+            onChange={e => setNameDraft(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') commitName()
+              if (e.key === 'Escape') setRenaming(false)
+            }} />
+          <button className="btn" onClick={commitName}>Save</button>
+          <button className="btn secondary" onClick={() => setRenaming(false)}>Cancel</button>
+        </div>
+      ) : (
+        <div className="btn-row" style={{ marginBottom: 12 }}>
+          <button className="btn secondary"
+            onClick={() => { setNameDraft(tray.name); setRenaming(true) }}>Rename</button>
+          <button className="btn secondary" onClick={duplicate} disabled={P.isFull(project)}>Duplicate</button>
+          <button className="btn danger" onClick={remove} disabled={project.trays.length <= 1}>Delete tray</button>
+        </div>
+      )}
+
       <div className="cite" style={{ marginBottom: 10 }}>
         Aluminum ladder tray, 6 in. loading depth, NEMA VE 1 Class 20C (labels only — fill is governed by width).
         Cables: multiconductor Type TC-ER, 3/C + ground, Cu, 600V.
@@ -134,10 +178,11 @@ export default function TrayFillTool() {
                 <button key={w} className={drawWidth === w ? 'on' : ''} onClick={() => setDrawWidth(w)}>{w}</button>
               ))}
             </div>
-            <TrayDiagram result={result} widthIn={drawWidth || undefined} />
+            <TrayDiagram result={result} widthIn={drawWidth || undefined} name={tray.name} />
 
             <table className="kv">
               <tbody>
+                <tr><td>Tray</td><td><b>{tray.name}</b></td></tr>
                 <tr><td>Case</td><td><b>{result.caseId}</b> — {result.caseRule}</td></tr>
                 <tr>
                   <td>Single layer</td>
@@ -196,13 +241,48 @@ export default function TrayFillTool() {
           </div>
         )}
 
+      {project.trays.length > 1 && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>All trays</h3>
+          <table className="rollup">
+            <thead>
+              <tr><th>Tray</th><th>Cables</th><th>Case</th><th>Width</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {evaluated.map(e => (
+                <tr key={e.tray.id} className={e.tray.id === activeId ? 'sel' : ''}
+                  onClick={() => pick(e.tray.id)}>
+                  <td>{e.tray.name}</td>
+                  <td>{e.result.error ? '—' : e.result.cableCount}</td>
+                  <td>{e.result.error ? '—' : e.result.caseId}</td>
+                  <td>{e.result.error || !e.result.adequate ? '—' : `${e.result.minWidth} in`}</td>
+                  <td>
+                    {e.result.error
+                      ? <span className="bad-tag">empty</span>
+                      : e.result.adequate
+                        ? <span className="ok-tag">OK</span>
+                        : <span className="bad-tag">too narrow</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="btn-row">
+            <button className="btn" onClick={exportAllCsv}>Export all trays (CSV)</button>
+          </div>
+          <div className="cite">Tap a row to open that tray.</div>
+        </div>
+      )}
+
       <h3>Standalone EGC in tray</h3>
       <div className="rowcard">
         <div className="seg" role="group" aria-label="Include standalone EGC">
-          <button className={egc.on ? 'on' : ''} onClick={() => setEgc(e => ({ ...e, on: true }))}>
+          <button className={egc.on ? 'on' : ''}
+            onClick={() => setProject(p => P.setEgc(p, tray.id, { on: true }))}>
             Include EGC in fill
           </button>
-          <button className={!egc.on ? 'on' : ''} onClick={() => setEgc(e => ({ ...e, on: false }))}>
+          <button className={!egc.on ? 'on' : ''}
+            onClick={() => setProject(p => P.setEgc(p, tray.id, { on: false }))}>
             No standalone EGC
           </button>
         </div>
@@ -212,13 +292,15 @@ export default function TrayFillTool() {
             <div className="rowgrid" style={{ marginTop: 8 }}>
               <div>
                 <label className="fld">EGC size</label>
-                <select value={egc.size} onChange={e => changeEgcSize(e.target.value)}>
+                <select value={egc.size}
+                  onChange={e => setProject(p => P.setEgcSize(p, tray.id, e.target.value, egc.insulation))}>
                   {EGC_SIZES.map(s => <option key={s} value={s}>{sizeLabel(s)}</option>)}
                 </select>
               </div>
               <div>
                 <label className="fld">Insulation</label>
-                <select value={egc.insulation} onChange={e => changeEgcSize(egc.size, e.target.value)}>
+                <select value={egc.insulation}
+                  onChange={e => setProject(p => P.setEgcSize(p, tray.id, egc.size, e.target.value))}>
                   {EGC_INSULATIONS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}
                 </select>
               </div>
@@ -228,7 +310,7 @@ export default function TrayFillTool() {
                 </label>
                 <input type="number" inputMode="decimal" min="0" step="0.001" value={egc.odIn}
                   placeholder="Enter OD from vendor data"
-                  onChange={e => setEgc(x => ({ ...x, odIn: e.target.value }))} />
+                  onChange={e => setProject(p => P.setEgc(p, tray.id, { odIn: e.target.value }))} />
               </div>
             </div>
             {egcOdFromTable5(egc.size, egc.insulation) === null
@@ -244,8 +326,8 @@ export default function TrayFillTool() {
         </div>
       </div>
 
-      <h3>Circuit list</h3>
-      {rows.map(r => {
+      <h3>Circuit list — {tray.name}</h3>
+      {tray.rows.map(r => {
         const cat = CABLE_DATA[r.size]
         const isControl = CONTROL_SIZES.includes(r.size)
         const noCatalog = defaultOd(r.size) === null
@@ -257,11 +339,12 @@ export default function TrayFillTool() {
               <div className="full">
                 <label className="fld">Equipment tag</label>
                 <input type="text" placeholder='e.g. "PDP-3 FEEDER"' value={r.tag}
-                  onChange={e => update(r.id, { tag: e.target.value })} />
+                  onChange={e => setProject(p => P.updateRow(p, tray.id, r.id, { tag: e.target.value }))} />
               </div>
               <div>
                 <label className="fld">Conductor size</label>
-                <select value={r.size} onChange={e => changeSize(r.id, e.target.value)}>
+                <select value={r.size}
+                  onChange={e => setProject(p => P.changeRowSize(p, tray.id, r.id, e.target.value))}>
                   {CABLE_SIZES.map(s => (
                     <option key={s} value={s}>
                       {sizeLabel(s)}{defaultOd(s) === null ? ' (manual OD)' : ''}
@@ -272,13 +355,13 @@ export default function TrayFillTool() {
               <div>
                 <label className="fld">Parallel runs</label>
                 <input type="number" inputMode="numeric" min="1" step="1" value={r.runs}
-                  onChange={e => update(r.id, { runs: e.target.value })} />
+                  onChange={e => setProject(p => P.updateRow(p, tray.id, r.id, { runs: e.target.value }))} />
               </div>
               <div className="full">
                 <label className="fld">Cable OD (in){noCatalog ? ' — manual entry required' : ''}</label>
                 <input type="number" inputMode="decimal" min="0" step="0.001" value={r.odIn}
                   placeholder={noCatalog ? 'Enter vendor OD' : ''}
-                  onChange={e => update(r.id, { odIn: e.target.value })} />
+                  onChange={e => setProject(p => P.updateRow(p, tray.id, r.id, { odIn: e.target.value }))} />
               </div>
             </div>
             {isControl && <span className="note">Control-cable construction (3/C, no ground) — {cat.spec}</span>}
@@ -291,15 +374,18 @@ export default function TrayFillTool() {
                 ? ` · contributes ${parseInt(r.runs, 10)} cable(s)`
                 : ''}
             </div>
-            {rows.length > 1 && <button className="btn danger del" onClick={() => del(r.id)}>Delete circuit</button>}
+            {tray.rows.length > 1 && (
+              <button className="btn danger del"
+                onClick={() => setProject(p => P.deleteRow(p, tray.id, r.id))}>Delete circuit</button>
+            )}
           </div>
         )
       })}
 
       <div className="btn-row">
-        <button className="btn secondary" onClick={() => setRows(rs => [...rs, newRow()])}>+ Add circuit</button>
-        <button className="btn" onClick={exportCsv} disabled={!!result.error}>Export CSV</button>
-        <button className="btn danger" onClick={clearAll}>Clear all</button>
+        <button className="btn secondary" onClick={() => setProject(p => P.addRow(p, tray.id))}>+ Add circuit</button>
+        <button className="btn" onClick={exportCsv} disabled={!!result.error}>Export this tray</button>
+        <button className="btn danger" onClick={clearAll}>Clear this tray</button>
       </div>
     </div>
   )

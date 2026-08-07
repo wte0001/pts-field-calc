@@ -33,6 +33,19 @@ describe('render smoke tests', () => {
     // single-layer promise is stated on the drawing
     expect(html).toContain('Single layer only')
   })
+  it('Tray fill tool renders the tray tab strip and its controls', () => {
+    const html = renderToStaticMarkup(React.createElement(TrayFillTool))
+    expect(html).toContain('Tray designs')
+    expect(html).toContain('Tray 1')
+    expect(html).toContain('of 10 trays')
+    expect(html).toContain('Rename')
+    expect(html).toContain('Duplicate')
+    expect(html).toContain('Delete tray')
+    // the tray name titles the circuit list and the drawing
+    expect(html).toContain('Circuit list — Tray 1')
+    // roll-up only appears with more than one tray
+    expect(html).not.toContain('All trays')
+  })
   it('Voltage drop tool renders with defaults', () => {
     const html = renderToStaticMarkup(React.createElement(VoltageDropTool))
     expect(html).toContain('Voltage Drop')

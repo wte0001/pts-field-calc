@@ -61,7 +61,7 @@ To stop it: click in the terminal and press `Ctrl+C`.
 npm test
 ```
 
-You should see all tests pass (159 of them, covering the tray fill cases including a standalone tray EGC counted in the fill and the cross-section drawing geometry, wire sizing (including hard-to-get size skipping and parallel-run suggestions), EGC sizing with the 250.122(A)/(B)/(F) companion rules including the parallel and cable-tray arrangements, voltage drop (both methods), motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
+You should see all tests pass (193 of them, covering the tray fill cases including a standalone tray EGC counted in the fill, the cross-section drawing geometry, the multi-tray project model and its legacy-data migration, wire sizing (including hard-to-get size skipping and parallel-run suggestions), EGC sizing with the 250.122(A)/(B)/(F) companion rules including the parallel and cable-tray arrangements, voltage drop (both methods), motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
 
 ---
 
@@ -122,7 +122,7 @@ Send the team the URL. Then:
 2. Tap the three-dot menu → **Add to Home screen** (or "Install app" if offered).
 3. Open it once from the icon while online.
 
-The Cable Tray circuit list is saved on the phone (localStorage) and survives refreshes and offline use. "Clear all" in the app erases it. Clearing the browser's site data also erases it.
+The Cable Tray tab holds up to 10 independent tray designs, each with its own circuit list and standalone EGC. They are saved on the phone (localStorage) and survive refreshes and offline use. "Clear this tray" empties one tray's circuit list; "Delete tray" removes a whole design. Clearing the browser's site data erases all of it. Anything saved before the multi-tray upgrade is migrated into the first tray on next open — the old storage keys are left in place untouched as a fallback copy.
 
 ---
 
@@ -130,7 +130,7 @@ The Cable Tray circuit list is saved on the phone (localStorage) and survives re
 
 ```
 src/data/          All NEC table values + Southwire cable ODs + heat-loss estimating defaults (JSON)
-src/calc/          Calculation logic (pure functions, no UI) - this is what the tests cover
+src/calc/          Calculation logic + the multi-tray project model (pure functions, no UI) - this is what the tests cover
 src/calc/__tests__/  Unit tests (npm test)
 src/tools/         The seven tool screens + About page (About opens from the ⓘ header button)
 VERIFICATION.md    Checklist - verify every data file against the printed NEC before team use

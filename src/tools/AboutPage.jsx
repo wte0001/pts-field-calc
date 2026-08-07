@@ -97,6 +97,23 @@ export default function AboutPage() {
         branch-circuit protective device rating — enter that rating rather than the FLC.
       </p>
 
+      <h3>Multiple tray designs</h3>
+      <p>
+        The Cable Tray Fill tab holds up to <b>10 independent tray designs</b> — enough for an electrical
+        room with several trays leaving it — each with its own circuit list, standalone EGC setting, and
+        result. Trays appear as a scrollable strip at the top, each chip showing its computed minimum
+        width, so the whole room is visible without switching. Rename a tray to match your drawing
+        callout, duplicate one to build a similar tray without re-entering the list, or delete it (the
+        last tray cannot be deleted). With more than one tray an <b>All trays</b> roll-up lists every
+        tray's cable count, case, width, and status; tap a row to open it.
+      </p>
+      <p>
+        Everything is saved on the phone. Exports carry the tray name: <em>Export this tray</em> writes
+        one CSV, <em>Export all trays</em> writes a single CSV with a room roll-up followed by each
+        tray's detail, and the cross-section SVG is titled and filenamed with the tray name for a
+        submittal. Work saved before this feature existed is folded into the first tray automatically.
+      </p>
+
       <h3>Tray cross-section drawing</h3>
       <p>
         The Cable Tray Fill result card draws a head-on section of the tray with the cables laid in,

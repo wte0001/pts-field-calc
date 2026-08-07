@@ -55,11 +55,15 @@ function Dim({ x1, x2, y, text, color }) {
   )
 }
 
+const slug = s => String(s || 'tray').trim().toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32) || 'tray'
+
 /**
  * Head-on cross-section of the tray with the cables laid in a single layer.
- * @param {{result:object, widthIn?:number}} props result is a trayFill() output
+ * @param {{result:object, widthIn?:number, name?:string}} props
+ *   result is a trayFill() output; name titles the drawing and the exported file.
  */
-export default function TrayDiagram({ result, widthIn }) {
+export default function TrayDiagram({ result, widthIn, name }) {
   const svgRef = useRef(null)
   const L = useMemo(() => trayDiagramLayout(result, { widthIn }), [result, widthIn])
 
@@ -76,7 +80,7 @@ export default function TrayDiagram({ result, widthIn }) {
     const url = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml;charset=utf-8' }))
     const a = document.createElement('a')
     a.href = url
-    a.download = `tray-section-${L.widthIn}in-${new Date().toISOString().slice(0, 10)}.svg`
+    a.download = `tray-${slug(name)}-${L.widthIn}in-${new Date().toISOString().slice(0, 10)}.svg`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -88,11 +92,18 @@ export default function TrayDiagram({ result, widthIn }) {
       <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg"
         viewBox={`0 0 ${L.svgW} ${L.svgH}`} width="100%" role="img"
         style={{ display: 'block', maxWidth: '100%', height: 'auto' }}>
-        <title>{`Cable tray cross-section, ${L.widthIn} in. wide, ${L.cables.length} cables in a single layer`}</title>
+        <title>{`${name ? name + ' — ' : ''}cable tray cross-section, ${L.widthIn} in. wide, ${L.cables.length} cables in a single layer`}</title>
         <desc>
           Head-on section of an aluminum ladder tray drawn to scale from the circuit list.
           Rail and rung proportions are illustrative; inside width and cable diameters are to scale.
         </desc>
+
+        {/* title block, so an exported drawing identifies its tray */}
+        {name && (
+          <text x={L.keyX} y="14" fontSize="12.5" fill={INK}>
+            {`${name} — ${L.widthIn} in. tray`}
+          </text>
+        )}
 
         {/* rung: cables rest on its top face */}
         <rect x={L.rung.x} y={L.rung.y} width={L.rung.w} height={L.rung.h}

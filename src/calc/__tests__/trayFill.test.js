@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  trayFill, trayFillCsv, isLargeConductor, cableArea, defaultOd,
+  trayFill, trayFillCsv, traysCsv, isLargeConductor, cableArea, defaultOd,
   egcOdFromTable5, EGC_INSULATIONS
 } from '../trayFill.js'
 
@@ -182,6 +182,41 @@ describe('standalone EGC in tray - 250.122(F)', () => {
     const r = trayFill(rows, { size: '250', odIn: 0.711 })
     const csv = trayFillCsv(rows, r)
     expect(csv).toContain('EGC (standalone, 250.122(F))')
+  })
+})
+
+describe('CSV export', () => {
+  it('names the tray in the single-tray header when given one', () => {
+    const rows = [row('4/0', 2)]
+    const csv = trayFillCsv(rows, trayFill(rows), 'T-A EAST')
+    expect(csv).toContain('Tray,T-A EAST')
+    // and omits the line when no name is supplied
+    expect(trayFillCsv(rows, trayFill(rows))).not.toContain('Tray,')
+  })
+  it('quotes a tray name containing a comma', () => {
+    const rows = [row('4/0', 1)]
+    expect(trayFillCsv(rows, trayFill(rows), 'EAST, LOWER')).toContain('"EAST, LOWER"')
+  })
+  it('all-trays export rolls up every tray then details each one', () => {
+    const a = [row('4/0', 4)]
+    const b = [row('12', 3)]
+    const csv = traysCsv([
+      { name: 'T-A EAST', rows: a, result: trayFill(a, { size: '250', odIn: 0.711 }) },
+      { name: 'LTG', rows: b, result: trayFill(b) }
+    ])
+    expect(csv).toContain('Trays,2')
+    expect(csv).toContain('SUMMARY')
+    expect(csv).toContain('T-A EAST')
+    expect(csv).toContain('LTG')
+    expect(csv).toContain('DETAIL,T-A EAST')
+    expect(csv).toContain('DETAIL,LTG')
+    // summary carries the computed width and status
+    expect(csv).toMatch(/T-A EAST,5,A,9,9,OK/)
+  })
+  it('all-trays export reports an empty tray without dropping it', () => {
+    const csv = traysCsv([{ name: 'SPARE', rows: [], result: trayFill([]) }])
+    expect(csv).toContain('SPARE')
+    expect(csv).toContain('Add at least one circuit')
   })
 })
 

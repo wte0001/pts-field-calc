@@ -223,15 +223,17 @@ export function trayFill(rows, egc) {
   }
 }
 
-/** Build CSV text of the circuit list and result. */
-export function trayFillCsv(rows, result) {
-  const esc = v => {
-    const s = String(v ?? '')
-    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
-  }
+const esc = v => {
+  const s = String(v ?? '')
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
+}
+
+/** Build CSV text of one tray's circuit list and result. */
+export function trayFillCsv(rows, result, trayName) {
   const lines = []
   lines.push('PTS Field Calc - Cable Tray Fill per NEC 2023 392.22(A)(1)')
   lines.push('Reference tool only. Verify against the NEC and stamped calculations.')
+  if (trayName) lines.push(`Tray,${esc(trayName)}`)
   lines.push('')
   lines.push('Equipment Tag,Conductor Size,Parallel Runs,Cable OD (in),Single-Cable Area (sq in),Total OD Contribution (in),Total Area Contribution (sq in),Class')
   for (const r of rows) {
@@ -266,6 +268,41 @@ export function trayFillCsv(rows, result) {
       if (result.nextUp) lines.push(`Utilization at next width up - ${result.nextUp.width} in (%),${result.nextUp.utilizationPct}`)
     } else {
       lines.push('RESULT,NO STANDARD WIDTH ADEQUATE - design review required')
+    }
+  }
+  return lines.join('\r\n')
+}
+
+/**
+ * One CSV for a whole room: a roll-up of every tray, then each tray's detail.
+ * @param {Array<{name:string, rows:Array, result:object}>} entries
+ */
+export function traysCsv(entries) {
+  const lines = []
+  lines.push('PTS Field Calc - Cable Tray Fill per NEC 2023 392.22(A)(1)')
+  lines.push('Reference tool only. Verify against the NEC and stamped calculations.')
+  lines.push(`Trays,${entries.length}`)
+  lines.push('')
+  lines.push('SUMMARY')
+  lines.push('Tray,Cables,Case,Min Width (in),Single-Layer Width (in),Status')
+  for (const e of entries) {
+    const r = e.result
+    lines.push([
+      esc(e.name),
+      r.error ? '' : r.cableCount,
+      r.error ? '' : r.caseId,
+      r.error || !r.adequate ? '' : r.minWidth,
+      r.error ? '' : (r.minWidthSingleLayer ?? ''),
+      esc(r.error ? r.error : r.adequate ? 'OK' : 'NO STANDARD WIDTH ADEQUATE')
+    ].join(','))
+  }
+  for (const e of entries) {
+    lines.push('')
+    lines.push(`DETAIL,${esc(e.name)}`)
+    if (e.result.error) {
+      lines.push(`,${esc(e.result.error)}`)
+    } else {
+      lines.push(trayFillCsv(e.rows, e.result).split('\r\n').slice(3).join('\r\n'))
     }
   }
   return lines.join('\r\n')
