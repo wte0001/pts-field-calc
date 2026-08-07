@@ -8,6 +8,7 @@ import PowerConvertTool from '../PowerConvertTool.jsx'
 import HeatRejectTool from '../HeatRejectTool.jsx'
 import VoltageDropTool from '../VoltageDropTool.jsx'
 import WireSizeTool from '../WireSizeTool.jsx'
+import TrayFillTool from '../TrayFillTool.jsx'
 import AboutPage from '../AboutPage.jsx'
 
 describe('render smoke tests', () => {
@@ -22,6 +23,15 @@ describe('render smoke tests', () => {
     expect(html).toContain('Wire Size')
     // No load current by default -> no result, so no EGC section yet
     expect(html).not.toContain('Equipment grounding conductor')
+  })
+  it('Tray fill tool renders the cross-section drawing in the result card', () => {
+    const html = renderToStaticMarkup(React.createElement(TrayFillTool))
+    expect(html).toContain('Cable Tray Fill')
+    expect(html).toContain('<svg')
+    expect(html).toContain('inside width')
+    expect(html).toContain('Export drawing (SVG)')
+    // single-layer promise is stated on the drawing
+    expect(html).toContain('Single layer only')
   })
   it('Voltage drop tool renders with defaults', () => {
     const html = renderToStaticMarkup(React.createElement(VoltageDropTool))

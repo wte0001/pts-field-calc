@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { trayFill, isLargeConductor, cableArea, defaultOd } from '../trayFill.js'
+import {
+  trayFill, trayFillCsv, isLargeConductor, cableArea, defaultOd,
+  egcOdFromTable5, EGC_INSULATIONS
+} from '../trayFill.js'
 
 const row = (size, runs = 1, odIn = defaultOd(size), tag = size) => ({ tag, size, runs, odIn })
 
@@ -112,6 +115,73 @@ describe('inadequate tray reporting', () => {
     const r = trayFill([row('750', 20)])
     expect(r.caseId).toBe('A')
     expect(r.adequate).toBe(false)
+  })
+})
+
+describe('standalone EGC in tray - 250.122(F)', () => {
+  it('derives conductor OD from the Table 5 approximate area', () => {
+    // 1/0 THHN area 0.1855 sq in -> OD = sqrt(4*0.1855/pi) = 0.486 in
+    expect(egcOdFromTable5('1/0', 'THHN/THWN-2')).toBeCloseTo(0.486, 3)
+    // round-trips through the app's own area convention
+    expect(cableArea(egcOdFromTable5('1/0', 'THHN/THWN-2'))).toBeCloseTo(0.1855, 3)
+  })
+  it('returns null where the Table 5 area is unverified (XHHW-2 above 500 kcmil)', () => {
+    expect(egcOdFromTable5('600', 'XHHW-2')).toBeNull()
+    expect(egcOdFromTable5('500', 'XHHW-2')).not.toBeNull()
+  })
+  it('exposes both Table 5 insulation columns', () => {
+    expect(EGC_INSULATIONS.map(i => i.id)).toContain('THHN/THWN-2')
+    expect(EGC_INSULATIONS.map(i => i.id)).toContain('XHHW-2')
+  })
+  it('omitting the EGC leaves results identical to before (back-compatible)', () => {
+    const without = trayFill([row('500', 3)])
+    const explicitNull = trayFill([row('500', 3)], null)
+    expect(explicitNull).toEqual(without)
+    expect(without.egc).toBeNull()
+  })
+  it('a large EGC adds its OD to Sd in Case A and can force a wider tray', () => {
+    // 4x 4/0 @ 1.499 = 5.996 in, fits a 6 in tray with 0.004 in to spare.
+    const bare = trayFill([row('4/0', 4)])
+    expect(bare.minWidth).toBe(6)
+    // Add a 250 kcmil EGC (4/0-or-larger class, OD 0.711) -> 6.707 in -> needs 9 in.
+    const withEgc = trayFill([row('4/0', 4)], { size: '250', odIn: 0.711 })
+    expect(withEgc.caseId).toBe('A')
+    expect(withEgc.sumAllOd).toBeCloseTo(6.707, 3)
+    expect(withEgc.minWidth).toBe(9)
+    expect(withEgc.cableCount).toBe(5)
+    expect(withEgc.egc.size).toBe('250')
+    expect(withEgc.egc.large).toBe(true)
+  })
+  it('a small EGC among large cables switches Case A to the mixed Case C', () => {
+    const withEgc = trayFill([row('4/0', 2)], { size: '1/0', odIn: 0.486 })
+    expect(withEgc.caseId).toBe('C')
+    expect(withEgc.egc.large).toBe(false)
+    // the EGC is the only sub-4/0 item, so Asmall is its area alone
+    expect(withEgc.Asmall).toBeCloseTo(cableArea(0.486), 3)
+    expect(withEgc.smallCount).toBe(1)
+  })
+  it('counts the EGC area in Case B', () => {
+    const bare = trayFill([row('12', 4)])
+    const withEgc = trayFill([row('12', 4)], { size: '6', odIn: 0.254 })
+    expect(withEgc.caseId).toBe('B')
+    expect(withEgc.Asmall).toBeGreaterThan(bare.Asmall)
+  })
+  it('warns about the multiconductor/single-conductor code basis whenever an EGC is included', () => {
+    const r = trayFill([row('4/0', 2)], { size: '1/0', odIn: 0.486 })
+    expect(r.warnings.some(w => w.includes('392.22(B)'))).toBe(true)
+  })
+  it('errors on a missing or invalid EGC OD', () => {
+    expect(trayFill([row('4/0', 2)], { size: '1/0', odIn: NaN }).error).toMatch(/Standalone EGC/)
+    expect(trayFill([row('4/0', 2)], { size: '1/0', odIn: 0 }).error).toMatch(/Standalone EGC/)
+  })
+  it('errors on an unknown EGC size', () => {
+    expect(trayFill([row('4/0', 2)], { size: '1200', odIn: 1.2 }).error).toMatch(/Standalone EGC/)
+  })
+  it('CSV export includes the EGC as its own line', () => {
+    const rows = [row('4/0', 2)]
+    const r = trayFill(rows, { size: '250', odIn: 0.711 })
+    const csv = trayFillCsv(rows, r)
+    expect(csv).toContain('EGC (standalone, 250.122(F))')
   })
 })
 

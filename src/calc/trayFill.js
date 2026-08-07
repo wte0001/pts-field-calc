@@ -7,11 +7,40 @@
 
 import trayTable from '../data/nec_392_22a.json'
 import cableData from '../data/tc_cable_dimensions.json'
+import table5 from '../data/nec_ch9_table5.json'
 
 export const STANDARD_WIDTHS = trayTable.standardWidthsIn
 export const COLUMN1 = trayTable.column1AreaSqIn
 export const CABLE_SIZES = cableData.sizes
 export const CABLE_DATA = cableData.cables
+
+// A standalone equipment grounding conductor run in the tray per 250.122(F) is a
+// single insulated conductor, so its size comes from Chapter 9 Table 5 rather than
+// the multiconductor cable catalog.
+// Sizes supplied as control-cable construction (3/C, no ground) in the Southwire
+// line this app carries. Shared with the UI and the cross-section drawing so the
+// two never disagree about what a row represents.
+export const CONTROL_SIZES = ['14', '12', '10']
+
+export const EGC_SIZES = table5.sizes
+export const EGC_INSULATIONS = Object.keys(table5.insulations).map(id => ({
+  id, label: table5.insulations[id].label
+}))
+
+/**
+ * Diameter of a single insulated conductor, derived from its Table 5 approximate
+ * area: area = (pi/4) x OD^2, so OD = sqrt(4 x area / pi). Derived rather than
+ * read from the table's diameter column so it stays exactly consistent with the
+ * cableArea() convention used for every other item in the tray.
+ * @returns {number|null} null when the Table 5 area is unverified in this app
+ */
+export function egcOdFromTable5(size, insulation) {
+  const ins = table5.insulations[insulation]
+  if (!ins) return null
+  const area = ins.areas[String(size)]
+  if (area === null || area === undefined) return null
+  return Math.round(Math.sqrt((4 * area) / Math.PI) * 1000) / 1000
+}
 
 // Conductor size order, smallest to largest. Index >= index of '4/0' means
 // "4/0 or larger" for case classification.
@@ -42,16 +71,20 @@ export function cableArea(odIn) {
  * Compute minimum standard tray width per 392.22(A)(1).
  * @param {Array<{tag:string, size:string, runs:number, odIn:number}>} rows
  *   odIn must already be resolved (catalog value or manual override).
+ * @param {{size:string, odIn:number}} [egc] optional standalone EGC run in the same
+ *   tray per 250.122(F). It physically occupies tray space, so it is counted.
  * @returns result object or {error}
  */
-export function trayFill(rows) {
+export function trayFill(rows, egc) {
   const clean = (rows || []).filter(r => r && r.size)
   if (clean.length === 0) return { error: 'Add at least one circuit.' }
 
   // Validate and expand: a row with N parallel runs is N physical cables.
   const cables = []
   const rowWarnings = []
+  let rowIndex = 0
   for (const r of clean) {
+    rowIndex++
     const runs = Number(r.runs)
     if (!Number.isInteger(runs) || runs < 1) {
       return { error: `"${r.tag || r.size}": parallel runs must be a whole number of 1 or more.` }
@@ -65,8 +98,35 @@ export function trayFill(rows) {
     const manualOd = defaultOd(r.size) === null || Math.abs(od - defaultOd(r.size)) > 1e-9
     if (manualOd) rowWarnings.push(`"${r.tag || r.size}" uses a manual/overridden OD (${od} in).`)
     for (let i = 0; i < runs; i++) {
-      cables.push({ tag: r.tag, size: r.size, odIn: od, areaSqIn: cableArea(od), large })
+      cables.push({
+        tag: r.tag, size: r.size, odIn: od, areaSqIn: cableArea(od), large,
+        rowIndex, runOf: runs, isEgc: false,
+        control: CONTROL_SIZES.includes(String(r.size))
+      })
     }
+  }
+
+  // Standalone EGC per 250.122(F): one conductor, counted like any other item.
+  let egcInfo = null
+  if (egc && egc.size) {
+    const od = Number(egc.odIn)
+    if (!Number.isFinite(od) || od <= 0) {
+      return { error: 'Standalone EGC: conductor OD is missing. Enter a valid OD in inches (Table 5 value is unverified for this size/insulation in this app).' }
+    }
+    let large
+    try { large = isLargeConductor(egc.size) } catch (e) { return { error: `Standalone EGC: ${e.message}` } }
+    cables.push({
+      tag: 'EGC (standalone)', size: egc.size, odIn: od, areaSqIn: cableArea(od), large,
+      rowIndex: null, runOf: 1, isEgc: true, control: false
+    })
+    egcInfo = { size: egc.size, odIn: od, areaSqIn: round4(cableArea(od)), large }
+    rowWarnings.push(
+      'Standalone tray EGC is included in this fill. Note the code basis: 392.22(A) covers ' +
+      'multiconductor cables while single conductors fall under 392.22(B), and the NEC gives no ' +
+      'single tabulated case for mixing them in one tray. This app counts the EGC under the same ' +
+      '4/0 classification as the cables, which occupies real tray space rather than ignoring it — ' +
+      'confirm the treatment with the engineer of record.'
+    )
   }
 
   const largeCables = cables.filter(c => c.large)
@@ -112,12 +172,32 @@ export function trayFill(rows) {
       allowable: round3(allowable),
       used: round3(used),
       ok,
+      // Whether every cable would physically fit side by side in ONE layer at this
+      // width. Case A is governed by exactly this; Case B is area-governed and does
+      // not itself require a single layer, so the two can disagree - see below.
+      singleLayerFits: sumAllOd <= w + 1e-9,
       utilizationPct: allowable > 0 ? Math.round((used / allowable) * 1000) / 10 : null
     }
   })
 
   const minIdx = widths.findIndex(x => x.ok)
   const adequate = minIdx !== -1
+  const slIdx = widths.findIndex(x => x.singleLayerFits)
+  const minWidthSingleLayer = slIdx !== -1 ? widths[slIdx].width : null
+
+  // Surface the case where the area rule passes on a tray the cables cannot
+  // actually be laid into in one layer. Stacking is not depicted by this app: it
+  // traps heat and changes the ampacity basis for cables in tray (392.80(A)).
+  if (adequate && !widths[minIdx].singleLayerFits) {
+    rowWarnings.push(
+      `At ${widths[minIdx].width} in. the ${caseId === 'B' ? 'area' : 'Column 2'} rule passes, but the cables ` +
+      `total ${round3(sumAllOd)} in. of width and will not fit side by side in a single layer. ` +
+      '392.22(A)(1)(c) requires 4/0-and-larger cables in a single layer; for smaller cables the fill rule ' +
+      'is area-based and does not itself mandate one layer. This app depicts and checks a single layer only ' +
+      '- stacking traps heat and changes the tray ampacity basis (392.80(A)). ' +
+      (minWidthSingleLayer ? `A single layer needs ${minWidthSingleLayer} in.` : 'No standard width fits one layer.')
+    )
+  }
 
   return {
     rule: 'NEC 2023 392.22(A)(1), Table 392.22(A)',
@@ -126,12 +206,15 @@ export function trayFill(rows) {
     cableCount: cables.length,
     largeCount: largeCables.length,
     smallCount: smallCables.length,
+    egc: egcInfo,
     Sd: round3(Sd),
     Asmall: round3(Asmall),
     sumAllOd: round3(sumAllOd),
+    cables,
     widths,
     adequate,
     minWidth: adequate ? widths[minIdx].width : null,
+    minWidthSingleLayer,
     selected: adequate ? widths[minIdx] : null,
     nextUp: adequate && widths[minIdx + 1] ? widths[minIdx + 1] : null,
     inadequateMessage: adequate ? null
@@ -160,6 +243,13 @@ export function trayFillCsv(rows, result) {
       a !== null ? round4(od * r.runs) : '',
       a !== null ? round4(a * r.runs) : '',
       isLargeConductor(r.size) ? '4/0 or larger' : 'smaller than 4/0'
+    ].join(','))
+  }
+  if (result && !result.error && result.egc) {
+    lines.push([
+      esc('EGC (standalone, 250.122(F))'), esc(result.egc.size), 1, result.egc.odIn,
+      round4(result.egc.areaSqIn), round4(result.egc.odIn), round4(result.egc.areaSqIn),
+      result.egc.large ? '4/0 or larger' : 'smaller than 4/0'
     ].join(','))
   }
   lines.push('')

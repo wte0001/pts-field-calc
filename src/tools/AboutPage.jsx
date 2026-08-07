@@ -97,6 +97,43 @@ export default function AboutPage() {
         branch-circuit protective device rating — enter that rating rather than the FLC.
       </p>
 
+      <h3>Tray cross-section drawing</h3>
+      <p>
+        The Cable Tray Fill result card draws a head-on section of the tray with the cables laid in,
+        updating as you edit the circuit list. Inside width and cable ODs are to scale;
+        <b> rail and rung proportions are illustrative</b> of an aluminum NEMA VE 1 ladder tray and are
+        not certified manufacturer dimensions — fill is governed by width and area, never by the drawn
+        rail shape. Multiconductor cables show three conductors plus their internal ground; a standalone
+        EGC shows as a single conductor, which makes visible why it is <em>in addition to</em> the grounds
+        already inside the cables. Cables are numbered by circuit-list row with a key beneath, and the
+        drawing exports as an SVG for a submittal.
+      </p>
+      <p>
+        <b>The drawing is single layer only, and that is a deliberate constraint.</b> 392.22(A)(1)(a) and
+        (c) require 4/0-and-larger cables in a single layer, and stacking smaller cables traps heat and
+        changes the ampacity basis for cables in tray (392.80(A)). So rather than drawing a second layer
+        when cables exceed the width, the tool reports the overflow. This exposes a real gap worth
+        knowing: for cables all smaller than 4/0 the fill rule is <em>area</em>-based and does not itself
+        require one layer, so a tray can pass the area rule at a width the cables cannot physically be
+        laid into side by side. When that happens the result card says so and reports the width a single
+        layer would need.
+      </p>
+
+      <h3>Standalone tray EGC and tray fill</h3>
+      <p>
+        A standalone EGC run in a tray occupies real tray space, so the Cable Tray Fill tool has an
+        optional entry for it and <b>counts it in the fill</b>. Its diameter is derived from the
+        Chapter 9 Table 5 approximate area (OD = √(4·area/π)) so it stays consistent with how every
+        other item in that tool is measured, and it can be overridden. <b>Code basis, stated plainly:</b>
+        392.22(A) addresses multiconductor cables while single conductors fall under 392.22(B), and the
+        NEC gives no single tabulated case for mixing them in one tray. The app counts the EGC under the
+        same 4/0-or-larger classification as the cables — which means it can change the governing case
+        (adding a 1/0 EGC to a tray of 4/0 cables moves Case A to the mixed Case C) and can push the
+        required width up a size. That is a deliberate, conservative treatment, not a literal table
+        application; confirm it with the engineer of record. Turn it off if the tray itself serves as the
+        EGC per 392.60 or each cable carries its own full-size ground.
+      </p>
+
       <h3>Voltage Drop tool</h3>
       <p>
         Two selectable methods. <b>NEC Table 9 (R + jX):</b> effective impedance
@@ -108,6 +145,10 @@ export default function AboutPage() {
         reactance and understates drop on large conductors. Length is always <b>one-way</b>.
         Parallel sets divide the current. The 3% / 5% limits shown are the informational notes to
         210.19(A) and 215.2(A) — recommendations, not code requirements.
+        The tab also carries its own <b>250.122 grounding section</b>: upsizing a conductor for voltage
+        drop triggers 250.122(B), so enter the device rating and the size ampacity alone would have
+        required, and it computes the proportionally increased EGC for the conductor you install —
+        including the parallel-set arrangements when sets is above 1.
         The Table 9 / Table 8 data was verified in 2026-07 against multiple independent published
         reproductions of the table text and manufacturer engineering handbooks with zero
         discrepancies; a spot-check against the printed NEC 2023 remains as final sign-off

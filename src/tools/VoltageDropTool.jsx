@@ -3,13 +3,15 @@ import {
   voltageDropTable9, voltageDropKFactor, VD_SIZES, RACEWAY_TYPES,
   VD_GUIDE_BRANCH_PCT, VD_GUIDE_TOTAL_PCT
 } from '../calc/voltageDrop.js'
+import { groundConductor, nextStandardOcpd } from '../calc/groundWire.js'
 
 const VOLTAGE_PRESETS = {
   3: [208, 240, 400, 480, 600, 4160],
   1: [120, 208, 240, 277]
 }
-const KCMIL = ['250', '300', '350', '400', '500', '600', '750', '1000']
-const sizeLabel = s => KCMIL.includes(s) ? `${s} kcmil` : `${s} AWG`
+// Numeric test rather than a hardcoded list, so EGC sizes from Table 250.122
+// (which reaches 1200 kcmil) label correctly alongside the Table 9 sizes.
+const sizeLabel = s => (/^\d+$/.test(s) && parseInt(s, 10) >= 250) ? `${s} kcmil` : `${s} AWG`
 const BIG_SIZES = ['250', '300', '350', '400', '500', '600', '750', '1000']
 
 const fmt = (x, d = 2) => Number.isFinite(x) ? x.toFixed(d) : '—'
@@ -25,6 +27,9 @@ export default function VoltageDropTool() {
   const [raceway, setRaceway] = useState('steel')
   const [pf, setPf] = useState('0.85')
   const [sets, setSets] = useState('1')
+  const [ocpd, setOcpd] = useState('')
+  const [minSize, setMinSize] = useState('')
+  const [egcMaterial, setEgcMaterial] = useState('copper')
 
   const changePhase = p => {
     setPhase(p)
@@ -48,6 +53,25 @@ export default function VoltageDropTool() {
   }, [method, amps, lengthFt, voltage, phase, size, material, raceway, pf, sets])
 
   const vNum = parseFloat(voltage)
+
+  // EGC for the voltage-drop-upsized conductor. The size selected above is the
+  // conductor actually being installed; "minimum size for ampacity" is the baseline
+  // that 250.122(B) measures the proportional increase against. Defaults to no upsizing.
+  const suggestedOcpd = useMemo(() => nextStandardOcpd(parseFloat(amps)), [amps])
+  const ocpdUsed = ocpd !== '' ? parseFloat(ocpd) : suggestedOcpd
+  const minSizeUsed = minSize !== '' ? minSize : size
+
+  const egc = useMemo(() => {
+    if (!Number.isFinite(ocpdUsed)) return null
+    const n = parseInt(sets, 10)
+    return groundConductor({
+      ocpdAmps: ocpdUsed,
+      material: egcMaterial,
+      circuitSize: size,
+      minAmpacitySize: minSizeUsed,
+      sets: Number.isFinite(n) && n > 0 ? n : 1
+    })
+  }, [ocpdUsed, egcMaterial, size, minSizeUsed, sets])
 
   return (
     <div>
@@ -168,6 +192,102 @@ export default function VoltageDropTool() {
           </div>
         </div>
       )}
+
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Grounding conductor for the upsized conductor — 250.122</h3>
+        <div className="cite" style={{ marginTop: 0, marginBottom: 8 }}>
+          Upsizing conductors for voltage drop triggers <b>250.122(B)</b>: the EGC must increase
+          proportionally by circular-mil area. Enter the device rating and the size ampacity alone
+          would have required; the conductor selected above is treated as the installed size.
+        </div>
+
+        <div className="rowgrid">
+          <div>
+            <label className="fld" htmlFor="vd-ocpd">
+              Device rating (A){ocpd === '' && suggestedOcpd ? ` — assuming ${suggestedOcpd}` : ''}
+            </label>
+            <input id="vd-ocpd" type="number" inputMode="decimal" min="0"
+              placeholder={suggestedOcpd ? `e.g. ${suggestedOcpd}` : 'e.g. 400'}
+              value={ocpd} onChange={e => setOcpd(e.target.value)} />
+          </div>
+          <div>
+            <label className="fld">Min. size for ampacity</label>
+            <select value={minSize} onChange={e => setMinSize(e.target.value)}>
+              <option value="">Same as selected ({sizeLabel(size)})</option>
+              {VD_SIZES.map(s => <option key={s} value={s}>{sizeLabel(s)}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <label className="fld">EGC material</label>
+        <div className="seg" role="group" aria-label="EGC material">
+          <button className={egcMaterial === 'copper' ? 'on' : ''} onClick={() => setEgcMaterial('copper')}>Copper</button>
+          <button className={egcMaterial === 'aluminum' ? 'on' : ''} onClick={() => setEgcMaterial('aluminum')}>Aluminum</button>
+        </div>
+
+        {egc && egc.error && <div className="err">{egc.error}</div>}
+        {!egc && <div className="warn">Enter a load current above, or a device rating here, to size the EGC.</div>}
+
+        {egc && !egc.error && (
+          <>
+            <div className="bigval" style={{ marginTop: 12 }}>
+              {egc.sets > 1 ? `${egc.sets} × ` : ''}{sizeLabel(egc.size)}
+              <span className="unit"> {egc.material} EGC{egc.sets > 1 ? ' (separate raceways)' : ''}</span>
+            </div>
+            <table className="kv">
+              <tbody>
+                <tr>
+                  <td>Table 250.122 row</td>
+                  <td>{egc.tableRating} A device → {sizeLabel(egc.baseSize)} {egc.material}</td>
+                </tr>
+                {egc.proportional && egc.proportional.size ? (
+                  <tr>
+                    <td>250.122(B) increase <em>(derived)</em></td>
+                    <td>
+                      {sizeLabel(egc.proportional.fromSize)} → {sizeLabel(egc.proportional.toSize)} is
+                      ×{egc.proportional.ratio} by circular mils, so {sizeLabel(egc.baseSize)} ×
+                      {' '}{egc.proportional.ratio} = {egc.proportional.neededCmil.toLocaleString()} cmil
+                      → <b>{sizeLabel(egc.proportional.size)}</b>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr>
+                    <td>250.122(B)</td>
+                    <td>
+                      {minSizeUsed === size
+                        ? 'No upsizing entered — set “Min. size for ampacity” to the smaller size if this conductor was upsized for voltage drop.'
+                        : 'Proportional increase does not reach the next EGC size.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            {egc.notes.map((n, i) => <div className="warn" key={i}>{n}</div>)}
+
+            {egc.parallelGuidance.length > 0 && (
+              <>
+                <h3>Permitted EGC arrangements for {egc.sets} parallel sets</h3>
+                <table className="kv">
+                  <tbody>
+                    {egc.parallelGuidance.map((g, i) => (
+                      <tr key={i}>
+                        <td>{g.arrangement}<br /><em>{g.rule}</em></td>
+                        <td>{g.text}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+
+            <div className="cite">
+              Source: {egc.table}, sized on the overcurrent device rating — not on the conductor size.
+              This tool does not select the overcurrent device. Sizes here come from the Table 9 list;
+              the Wire tab covers the full Table 310.16 range.
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }
