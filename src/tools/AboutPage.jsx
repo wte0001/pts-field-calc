@@ -18,7 +18,7 @@ export default function AboutPage() {
       <ul>
         <li><b>Table 310.16</b> — conductor ampacity (Wire Size tool)</li>
         <li><b>Table 310.15(B)(1)(1)</b> — ambient temperature correction, 30°C base (Wire Size, advanced)</li>
-        <li><b>Table 310.15(C)(1)</b> — adjustment for more than three current-carrying conductors (Wire Size, advanced)</li>
+        <li><b>Table 310.15(C)(1)</b> — adjustment for more than three current-carrying conductors (Wire Size advanced, and the Conduit Fill parallel-set comparison)</li>
         <li><b>Table 250.122</b> — minimum equipment grounding conductor size (Wire Size tool)</li>
         <li><b>240.6(A)</b> — standard overcurrent device ratings (Wire Size tool, EGC section)</li>
         <li><b>Table 430.250</b> — three-phase motor full-load current (Motor FLC tool)</li>
@@ -95,6 +95,32 @@ export default function AboutPage() {
         grounding-electrode conductors are different conductors governed by different rules
         (250.102, 250.66) and are <b>not</b> covered. Motor circuits per 250.122(D) use the
         branch-circuit protective device rating — enter that rating rather than the FLC.
+      </p>
+
+      <h3>Conduit fill, parallel sets, and the derating trap</h3>
+      <p>
+        Conduit fill counts <b>every physical conductor</b> — phases, neutrals, and grounds alike. A
+        Chapter 9 note requires equipment grounding and bonding conductors to be included using their
+        actual dimensions, so give the ground its own row (the app carries insulated dimensions from
+        Table 5; a bare EGC is smaller, so entering it as insulated is conservative). Fill limits come
+        from Table 1: 53% for one conductor, 31% for two, 40% for three or more.
+      </p>
+      <p>
+        Enter the conductors for <b>one set</b> and set the parallel set count. The tool then compares
+        both arrangements: one conduit per set, or every set sharing one conduit. Fill alone favours the
+        single big conduit — <b>ampacity usually does not.</b> Piling sets into one raceway pushes the
+        current-carrying count past three and triggers the Table 310.15(C)(1) adjustment, so the tool
+        shows the current-carrying count, the resulting factor, and what it costs in amps. Three sets of
+        350 kcmil copper is the classic example: three 2-1/2 in. conduits carry 930 A per phase, while
+        one 4 in. conduit carries 651 A — a 30% loss to save conduit.
+      </p>
+      <p>
+        Roles drive the current-carrying count, not the fill: a ground never counts, and a neutral counts
+        only where it carries harmonic current from nonlinear loads per 310.15(E). Note also that with
+        metallic conduit all phases of a set must share one raceway (300.3(B), and 300.20(A) for induced
+        heating), and per 250.122(F) parallel sets in separate raceways each need a full-size EGC while
+        sets sharing one raceway may share one. The tool does not size conductors, check terminations per
+        110.14(C), or check jam ratio, pull tension, or the 60% nipple allowance.
       </p>
 
       <h3>Multiple tray designs</h3>

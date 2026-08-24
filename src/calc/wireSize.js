@@ -214,3 +214,17 @@ export function selectWireSize(amps, material, tempRating, advanced = {}) {
 
 function round1(x) { return x === null ? null : Math.round(x * 10) / 10 }
 function round3(x) { return Math.round(x * 1000) / 1000 }
+
+/**
+ * Raw Table 310.16 ampacity for one size, before any correction or adjustment.
+ * @returns {number|null} null when the size is not listed for that material, or
+ *   the value is unverified in this app.
+ */
+export function baseAmpacity(size, material, tempRating) {
+  const col = table31016[material]
+  if (!col) return null
+  const entry = col[String(size)]
+  if (!entry) return null
+  const v = entry[String(tempRating)]
+  return (v === null || v === undefined) ? null : v
+}

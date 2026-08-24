@@ -9,6 +9,7 @@ import HeatRejectTool from '../HeatRejectTool.jsx'
 import VoltageDropTool from '../VoltageDropTool.jsx'
 import WireSizeTool from '../WireSizeTool.jsx'
 import TrayFillTool from '../TrayFillTool.jsx'
+import ConduitFillTool from '../ConduitFillTool.jsx'
 import AboutPage from '../AboutPage.jsx'
 
 describe('render smoke tests', () => {
@@ -45,6 +46,15 @@ describe('render smoke tests', () => {
     expect(html).toContain('Circuit list — Tray 1')
     // roll-up only appears with more than one tray
     expect(html).not.toContain('All trays')
+  })
+  it('Conduit fill tool renders sets, roles and the ground shortcut', () => {
+    const html = renderToStaticMarkup(React.createElement(ConduitFillTool))
+    expect(html).toContain('Conduit Fill')
+    expect(html).toContain('Parallel sets')
+    expect(html).toContain('+ Add ground')
+    expect(html).toContain('Current-carrying')
+    // one set by default, so the arrangement comparison stays hidden
+    expect(html).not.toContain('One conduit per set vs')
   })
   it('Voltage drop tool renders with defaults', () => {
     const html = renderToStaticMarkup(React.createElement(VoltageDropTool))
