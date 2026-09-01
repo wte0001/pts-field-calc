@@ -1,0 +1,51 @@
+{
+  "_meta": {
+    "source": "Standard overcurrent device ratings per NEC 240.6(A).",
+    "caveat": "The 'stocked' flag is a PTS PROCUREMENT PREFERENCE, NOT A CODE RULE. Every rating listed here is a standard size the NEC recognizes; the ones flagged false are the half-size ratings PTS does not use, so the tool steps past them to the next full size. Flip a flag to change what the app recommends - nothing else needs editing.",
+    "verify": "Confirm the rating list against printed 240.6(A), and confirm the stocked flags against PTS practice. See VERIFICATION.md section 13."
+  },
+  "ratings": [
+    { "a": 15, "stocked": true },
+    { "a": 20, "stocked": true },
+    { "a": 25, "stocked": false },
+    { "a": 30, "stocked": true },
+    { "a": 35, "stocked": false },
+    { "a": 40, "stocked": true },
+    { "a": 45, "stocked": false },
+    { "a": 50, "stocked": true },
+    { "a": 60, "stocked": true },
+    { "a": 70, "stocked": true },
+    { "a": 80, "stocked": true },
+    { "a": 90, "stocked": true },
+    { "a": 100, "stocked": true },
+    { "a": 110, "stocked": false },
+    { "a": 125, "stocked": true },
+    { "a": 150, "stocked": true },
+    { "a": 175, "stocked": true },
+    { "a": 200, "stocked": true },
+    { "a": 225, "stocked": true },
+    { "a": 250, "stocked": true },
+    { "a": 300, "stocked": true },
+    { "a": 350, "stocked": true },
+    { "a": 400, "stocked": true },
+    { "a": 450, "stocked": true },
+    { "a": 500, "stocked": true },
+    { "a": 600, "stocked": true },
+    { "a": 700, "stocked": true },
+    { "a": 800, "stocked": true },
+    { "a": 1000, "stocked": true },
+    { "a": 1200, "stocked": true },
+    { "a": 1600, "stocked": true },
+    { "a": 2000, "stocked": true },
+    { "a": 2500, "stocked": true },
+    { "a": 3000, "stocked": true },
+    { "a": 4000, "stocked": true },
+    { "a": 5000, "stocked": true },
+    { "a": 6000, "stocked": true }
+  ],
+  "smallConductorMaxOcpd": {
+    "_note": "NEC 240.4(D)(3)-(7). These caps override ampacity: a conductor may not be protected above this rating no matter what Table 310.16 allows. These are the asterisked rows in Table 310.16.",
+    "copper": { "14": 15, "12": 20, "10": 30 },
+    "aluminum": { "12": 15, "10": 25 }
+  }
+}

@@ -125,6 +125,17 @@ Relocated 2026-07-19 out of `nec_ch9_table9.json` (values unchanged and already 
 - [x] AWG values 14–4/0 — verified in the section 10 research pass (printed digits, matched primary NEC text plus Southwire and Okonite handbooks)
 - [ ] Confirm the added sizes 700, 800, 900, 1250, 1500, 1750, 2000 kcmil appear in Table 8 (research indicated they do; these entries are definitional kcmil × 1000 rather than transcribed digits)
 
+## 13. `src/data/pts_ocpd_sizes.json` — overcurrent ratings and 240.4(D) caps
+
+Added 2026-07-19 when the Wire tool was changed to size conductors **to the overcurrent device** rather than to the raw load. Before that change it sized to the load only, which returned 10 AWG for a 27 A load — a conductor 240.4(D) does not permit on the 40 A device that load needs.
+
+- [ ] Rating list against printed **240.6(A)** (37 values, 15 A through 6000 A)
+- [ ] **`stocked` flags — PTS PREFERENCE, NOT CODE.** Currently 25, 35, 45, and 110 A are flagged false as half sizes PTS does not use; every other rating is true. Confirm this matches PTS practice — this is the single most likely thing to be wrong, and it directly changes recommended wire sizes.
+- [ ] **240.4(D) small-conductor caps**: copper 14→15 A, 12→20 A, 10→30 A; aluminum 12→15 A, 10→25 A. These are the asterisked rows on the printed Table 310.16.
+- [ ] Confirm the **110.14(C)** column rule as implemented in `src/calc/branchCircuit.js`: 60°C column at 100 A and below, 75°C above, 90°C never used for sizing. Note the consequence — a 60 A circuit needs 4 AWG Cu on the 60°C column (70 A), where the 75°C column would allow 6 AWG. The "All listed 75°C" toggle covers gear listed and identified for 75°C terminations per 110.14(C)(1)(a).
+- [ ] Confirm the default **125% continuous** factor is the right default for PTS work, and that applying it to the device rating (not only the conductor) matches practice.
+- [ ] Confirm what is deliberately **not** applied: motor branch-circuit rules (430.52 permits far larger devices), and the 240.4(B)/(E)/(G) next-size-up and specific-application exceptions.
+
 ---
 
 ## Edition caveat

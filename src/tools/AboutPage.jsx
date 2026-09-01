@@ -44,6 +44,33 @@ export default function AboutPage() {
         manual OD entry from vendor data. Cable area is computed as π/4 × OD².
       </p>
 
+      <h3>Wire Size tool — how a conductor is sized</h3>
+      <p>
+        The conductor is sized to the <b>overcurrent device</b>, not to the raw load, because two rules
+        sit on top of Table 310.16:
+      </p>
+      <ul>
+        <li><b>240.4(D) small-conductor limits.</b> 14, 12, and 10 AWG copper may not be protected above
+          15, 20, and 30 A (12 and 10 AWG aluminum above 15 and 25 A) whatever the ampacity column says.
+          These are the asterisked rows on the printed table. It is why a 40 A circuit cannot use 10 AWG
+          even though the 75°C column shows 35 A.</li>
+        <li><b>110.14(C) termination temperature.</b> Circuits of 100 A or less are sized from the
+          <b>60°C</b> column, above 100 A from the <b>75°C</b> column. The 90°C column is never used for
+          sizing — it is only ever a derating basis. Switch to "All listed 75°C" only where every
+          termination in the circuit is listed and identified for it, per 110.14(C)(1)(a).</li>
+      </ul>
+      <p>
+        Continuous loads are taken at 125% by default, and the device rating steps up to the next size
+        PTS stocks — the half sizes (25, 35, 45, 110 A) are skipped, which is a <b>procurement
+        preference, not a code rule</b>, and is editable in <code>src/data/pts_ocpd_sizes.json</code>.
+        A 27 A continuous load therefore gives a 40 A device and 8 AWG copper, and the tool says in
+        plain words why 10 AWG was ruled out. Enter a device rating yourself to override the derived one.
+      </p>
+      <p>
+        <b>Not applied:</b> motor branch-circuit rules (430.52 permits far larger devices than 125%),
+        and the 240.4(B)/(E)/(G) next-size-up and specific-application exceptions. Check those yourself.
+      </p>
+
       <h3>Wire Size tool — stock preferences and parallel runs</h3>
       <p>
         Two behaviors are <b>PTS procurement preferences, not code rules</b>: sizes that are hard

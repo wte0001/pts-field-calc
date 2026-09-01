@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
-import { selectWireSize, UNCOMMON_SIZES, PARALLEL_SUGGEST_AMPS } from '../calc/wireSize.js'
-import { groundConductor, nextStandardOcpd } from '../calc/groundWire.js'
+import { UNCOMMON_SIZES, PARALLEL_SUGGEST_AMPS } from '../calc/wireSize.js'
+import { sizeBranchCircuit } from '../calc/branchCircuit.js'
+import { groundConductor } from '../calc/groundWire.js'
 
 // Sizes are AWG below 250 and kcmil at 250 and above; AWG names like "4/0" are not
 // plain digits. Numeric test rather than a hardcoded list so EGC sizes from
@@ -10,7 +11,8 @@ const sizeLabel = s => (/^\d+$/.test(s) && parseInt(s, 10) >= 250) ? `${s} kcmil
 export default function WireSizeTool() {
   const [amps, setAmps] = useState('')
   const [material, setMaterial] = useState('copper')
-  const [temp, setTemp] = useState(75)
+  const [continuous, setContinuous] = useState(true)
+  const [term75, setTerm75] = useState(false)
   const [useAdv, setUseAdv] = useState(false)
   const [ambient, setAmbient] = useState('30')
   const [ccc, setCcc] = useState('3')
@@ -21,20 +23,21 @@ export default function WireSizeTool() {
   const result = useMemo(() => {
     const a = parseFloat(amps)
     if (!amps || !Number.isFinite(a)) return null
-    const adv = {}
+    const opts = { continuous, terminations75: term75 }
+    const manual = parseFloat(ocpd)
+    if (ocpd !== '' && Number.isFinite(manual)) opts.ocpdAmps = manual
     if (useAdv) {
       const amb = parseFloat(ambient)
       const n = parseInt(ccc, 10)
-      if (Number.isFinite(amb)) adv.ambientC = amb
-      if (Number.isFinite(n)) adv.numConductors = n
+      if (Number.isFinite(amb)) opts.ambientC = amb
+      if (Number.isFinite(n)) opts.numConductors = n
     }
-    return selectWireSize(a, material, temp, adv)
-  }, [amps, material, temp, useAdv, ambient, ccc])
+    return sizeBranchCircuit(a, material, opts)
+  }, [amps, material, continuous, term75, ocpd, useAdv, ambient, ccc])
 
-  // OCPD defaults to the next standard rating at or above the load (240.6(A)) until
-  // the user types one. Table 250.122 keys off the device rating, not the conductor.
-  const suggestedOcpd = useMemo(() => nextStandardOcpd(parseFloat(amps)), [amps])
-  const ocpdUsed = ocpd !== '' ? parseFloat(ocpd) : suggestedOcpd
+  // The device rating now comes from the sizing method itself, so the EGC section
+  // and the conductor are always talking about the same circuit.
+  const ocpdUsed = result && result.ocpd ? result.ocpd : null
 
   // Which makeup the EGC is sized for. A picked parallel row wins; otherwise the
   // single conductor, falling back to the fewest-runs parallel option when no single
@@ -87,12 +90,29 @@ export default function WireSizeTool() {
         <button className={material === 'aluminum' ? 'on' : ''} onClick={() => setMaterial('aluminum')}>Aluminum</button>
       </div>
 
-      <label className="fld">Insulation temperature rating</label>
-      <div className="seg" role="group" aria-label="Temperature rating">
-        {[60, 75, 90].map(t => (
-          <button key={t} className={temp === t ? 'on' : ''} onClick={() => setTemp(t)}>{t}°C</button>
-        ))}
+      <label className="fld">Load type</label>
+      <div className="seg" role="group" aria-label="Load type">
+        <button className={continuous ? 'on' : ''} onClick={() => setContinuous(true)}>Continuous (125%)</button>
+        <button className={!continuous ? 'on' : ''} onClick={() => setContinuous(false)}>Non-continuous</button>
       </div>
+
+      <label className="fld">Terminations</label>
+      <div className="seg" role="group" aria-label="Termination rating">
+        <button className={!term75 ? 'on' : ''} onClick={() => setTerm75(false)}>Per 110.14(C)</button>
+        <button className={term75 ? 'on' : ''} onClick={() => setTerm75(true)}>All listed 75°C</button>
+      </div>
+      <div className="cite" style={{ marginTop: 4 }}>
+        Default follows 110.14(C): the 60°C column at 100 A and below, the 75°C column above it.
+        The 90°C column is never used for sizing. Switch to 75°C only where every termination in the
+        circuit is listed and identified for it.
+      </div>
+
+      <label className="fld" htmlFor="ws-ocpd">
+        Overcurrent device (A){result && result.ocpdDerived ? ' — leave blank to size it for you' : ''}
+      </label>
+      <input id="ws-ocpd" type="number" inputMode="numeric" min="0" step="1"
+        placeholder={result && result.ocpd ? String(result.ocpd) : 'auto'}
+        value={ocpd} onChange={e => setOcpd(e.target.value)} />
 
       <details className="adv" open={useAdv} onToggle={e => setUseAdv(e.target.open)}>
         <summary>Advanced: ambient correction and conductor count</summary>
@@ -108,10 +128,36 @@ export default function WireSizeTool() {
 
       {result && !result.error && (
         <div className="card result">
-          <div className="bigval">{sizeLabel(result.size)}</div>
+          <div className="bigval">
+            {sizeLabel(result.size)}
+            <span className="unit"> on a {result.ocpd} A device</span>
+          </div>
           <table className="kv">
             <tbody>
+              <tr>
+                <td>Design current</td>
+                <td>
+                  {result.loadAmps} A load
+                  {result.continuous ? ` × 125% continuous = ${result.designAmps} A` : ' (non-continuous)'}
+                </td>
+              </tr>
+              <tr>
+                <td>Overcurrent device</td>
+                <td>
+                  <b>{result.ocpd} A</b>{' '}
+                  {result.ocpdDerived
+                    ? <em>(derived — next size PTS stocks at or above {result.designAmps} A)</em>
+                    : <em>(entered)</em>}
+                </td>
+              </tr>
+              <tr><td>Column used</td><td>{result.terminationRule}</td></tr>
               <tr><td>Table 310.16 ampacity</td><td>{result.baseAmpacity} A ({result.tempRating}°C, {result.material})</td></tr>
+              {result.smallConductorCap !== null && result.smallConductorCap !== undefined && (
+                <tr>
+                  <td>240.4(D) limit</td>
+                  <td>{result.size} AWG may be protected at up to {result.smallConductorCap} A → protected at <b>{result.protectedAt} A</b></td>
+                </tr>
+              )}
               {result.factors.usingAdvanced && (
                 <>
                   <tr><td>Ambient factor</td><td>{result.factors.ambient.factor ?? '—'} {result.factors.ambient.label ? `(${result.factors.ambient.label}°C)` : ''}</td></tr>
@@ -119,27 +165,38 @@ export default function WireSizeTool() {
                   <tr><td>Derated ampacity</td><td><b>{result.baseAmpacity} × {result.factors.totalFactor} = {result.deratedAmpacity} A</b></td></tr>
                 </>
               )}
-              <tr><td>Load</td><td>{result.amps} A {result.deratedAmpacity >= result.amps ? <span className="ok-tag">OK</span> : null}</td></tr>
+              <tr>
+                <td>Check</td>
+                <td>
+                  carries {result.deratedAmpacity} A ≥ {result.designAmps} A design{' '}
+                  <span className="ok-tag">OK</span>, and may be protected at {result.protectedAt} A ≥ {result.ocpd} A{' '}
+                  <span className="ok-tag">OK</span>
+                </td>
+              </tr>
               {result.nextSize && (
-                <tr><td>Next size up</td><td>{result.nextSize.size}: {result.nextSize.baseAmpacity} A table{result.factors.usingAdvanced ? `, ${result.nextSize.deratedAmpacity} A derated` : ''}</td></tr>
+                <tr><td>Next size up</td><td>{sizeLabel(result.nextSize.size)}: {result.nextSize.baseAmpacity} A at {result.tempRating}°C</td></tr>
               )}
             </tbody>
           </table>
           {result.hardToGetSkipped && (
             <div className="warn">
-              ⚠ {sizeLabel(result.hardToGetSkipped.size)} ({result.hardToGetSkipped.deratedAmpacity} A
-              {result.factors.usingAdvanced ? ' derated' : ''}) would carry the load but is hard to get —
-              recommending {sizeLabel(result.size)} instead.
+              ⚠ {sizeLabel(result.hardToGetSkipped.size)} ({result.hardToGetSkipped.baseAmpacity} A at
+              {' '}{result.tempRating}°C) would work but is hard to get — recommending {sizeLabel(result.size)} instead.
             </div>
           )}
           {result.warnings.map((w, i) => <div className="warn" key={i}>{w}</div>)}
-          <div className="cite">Source: {result.table}. Termination ratings per 110.14(C) may govern separately — this tool does not check terminations.</div>
+          <div className="cite">
+            Source: {result.table}, sized to the overcurrent device. Applies 240.4(D) small-conductor
+            limits and the 110.14(C) termination column; the 90°C column is never used for sizing.
+            Half-size device ratings PTS does not stock are stepped past — a procurement preference,
+            not a code rule. Motor circuits (430.52) and 240.4(B)/(E)/(G) exceptions are not applied.
+          </div>
         </div>
       )}
 
       {result && result.parallel && (
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Load-carrying conductors — parallel run options, {result.amps} A</h3>
+          <h3 style={{ marginTop: 0 }}>Load-carrying conductors — parallel run options, {result.designAmps} A design</h3>
           <table className="widthtable">
             <thead>
               <tr><th>Runs/phase</th><th>Conductor</th><th>Per run</th><th>Total</th></tr>
@@ -187,13 +244,6 @@ export default function WireSizeTool() {
             {config.sets > 1 && !config.assumed ? ' (tap another row in the table above to change)' : ''}
           </div>
 
-          <label className="fld" htmlFor="ws-ocpd">
-            Overcurrent device rating (A){ocpd === '' && suggestedOcpd ? ` — assuming ${suggestedOcpd} A` : ''}
-          </label>
-          <input id="ws-ocpd" type="number" inputMode="decimal" min="0"
-            placeholder={suggestedOcpd ? `e.g. ${suggestedOcpd}` : 'e.g. 400'}
-            value={ocpd} onChange={e => setOcpd(e.target.value)} />
-
           <label className="fld">EGC material</label>
           <div className="seg" role="group" aria-label="EGC material">
             <button className={egcMaterial === 'copper' ? 'on' : ''} onClick={() => setEgcMaterial('copper')}>Copper</button>
@@ -226,7 +276,7 @@ export default function WireSizeTool() {
                   )}
                   <tr>
                     <td>Device rating used</td>
-                    <td>{egc.ocpdAmps} A {ocpd === '' ? <em>(assumed — next standard rating ≥ load per 240.6(A))</em> : ''}</td>
+                    <td>{egc.ocpdAmps} A — the same device the conductor above was sized to</td>
                   </tr>
                 </tbody>
               </table>
