@@ -169,3 +169,55 @@ describe('input handling', () => {
     expect(r.parallel[0].runs).toBeGreaterThan(1)
   })
 })
+
+describe('parallel sets are sized to the device, not the 125% design current', () => {
+  const first = r => `${r.parallel[0].runs}x${r.parallel[0].size}`
+
+  it('5000 A on a 5000 A device gives 11 x 750 kcmil (5000 / 475 = 10.5)', () => {
+    const r = sizeBranchCircuit(5000, 'copper', { ocpdAmps: 5000 })
+    expect(first(r)).toBe('11x750')
+    expect(r.parallelBasisAmps).toBe(5000)
+  })
+  it('the same answer non-continuous, where the device is derived', () => {
+    const r = sizeBranchCircuit(5000, 'copper', { continuous: false })
+    expect(r.ocpd).toBe(5000)
+    expect(first(r)).toBe('11x750')
+  })
+  it('a device entered below 125% is treated as 100%-rated, and says so', () => {
+    const r = sizeBranchCircuit(5000, 'copper', { ocpdAmps: 5000 })
+    expect(r.hundredPercentRated).toBe(true)
+    expect(r.warnings.some(w => w.includes('100% continuous operation'))).toBe(true)
+  })
+  it('a larger device entered drives more sets: 6000 A needs 13 x 750', () => {
+    // 6000 / 475 = 12.6 -> 13 sets = 6175 A
+    const r = sizeBranchCircuit(5000, 'copper', { ocpdAmps: 6000 })
+    expect(r.parallelBasisAmps).toBe(6000)
+    expect(first(r)).toBe('13x750')
+  })
+  it('a derived device that rounds up is covered: 3500 A continuous gets 11 x 750, not 10', () => {
+    // 3500 x 1.25 = 4375 A design, device rounds up to 5000 A. 10 x 750 = 4750 A
+    // would sit under the device; the old basis produced exactly that.
+    const r = sizeBranchCircuit(3500, 'copper')
+    expect(r.ocpd).toBe(5000)
+    expect(first(r)).toBe('11x750')
+    expect(r.hundredPercentRated).toBe(false)
+  })
+  it('no parallel option is ever smaller than the device protecting it', () => {
+    for (const load of [500, 900, 1500, 2200, 3500, 4000]) {
+      for (const continuous of [true, false]) {
+        const r = sizeBranchCircuit(load, 'copper', { continuous })
+        if (!r.parallel) continue
+        r.parallel.forEach(o => expect(o.totalAmpacity).toBeGreaterThanOrEqual(r.ocpd))
+      }
+    }
+  })
+  it('points to the 100%-rated route when 125% overruns every standard device', () => {
+    const r = sizeBranchCircuit(5000, 'copper') // 6250 A design > 6000 A max
+    expect(r.error).toContain('100% continuous operation')
+  })
+  it('a derived device above 125% is not flagged as 100%-rated', () => {
+    const r = sizeBranchCircuit(27, 'copper')
+    expect(r.hundredPercentRated).toBe(false)
+    expect(r.size).toBe('8')
+  })
+})

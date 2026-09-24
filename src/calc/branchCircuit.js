@@ -79,7 +79,31 @@ export function sizeBranchCircuit(loadAmps, material, opts = {}) {
   const ocpdDerived = opts.ocpdAmps === undefined || opts.ocpdAmps === null
   const ocpd = ocpdDerived ? nextStockedOcpd(designAmps) : opts.ocpdAmps
   if (!Number.isFinite(ocpd) || ocpd <= 0) {
-    return { error: `No stocked overcurrent rating covers ${round1(designAmps)} A. Enter one manually.` }
+    return {
+      error: continuous && ocpdDerived
+        ? `125% of this continuous load is ${round1(designAmps)} A, above the largest standard device. ` +
+          'A load this size is normally served by an assembly listed for 100% continuous operation - ' +
+          'set Load type to Non-continuous for that case, or enter the device rating.'
+        : `No stocked overcurrent rating covers ${round1(designAmps)} A. Enter one manually.`
+    }
+  }
+
+  const warnings = []
+
+  // The 125% factor exists to pick the device. Once a device is entered, the
+  // conductors are sized to it. A device entered BELOW 125% of a continuous load
+  // is only legal as an assembly listed for 100% continuous operation, and in that
+  // case the conductors size at 100% too (210.19(A)(1) / 215.2(A)(1) exceptions) -
+  // so size at 100% and say so, rather than silently upsizing past the device.
+  const hundredPercentRated = continuous && !ocpdDerived && ocpd < designAmps - 1e-9
+  const conductorAmps = hundredPercentRated ? loadAmps : designAmps
+  if (hundredPercentRated) {
+    warnings.push(
+      `A ${ocpd} A device is below 125% of this continuous load (${round1(designAmps)} A). That is only ` +
+      'permitted where the assembly, including the device, is listed for 100% continuous operation - ' +
+      `so the conductors are sized at 100% of the load (${round1(loadAmps)} A). If the device is not ` +
+      '100%-rated, it is too small: clear the device field to size one.'
+    )
   }
 
   const tempRating = terminationColumn(ocpd, opts.terminations75)
@@ -122,28 +146,34 @@ export function sizeBranchCircuit(loadAmps, material, opts = {}) {
       cap,
       protectedAt,
       derated: base * totalFactor,
-      ok: protectedAt >= ocpd && base * totalFactor >= designAmps - 1e-9,
+      ok: protectedAt >= ocpd && base * totalFactor >= conductorAmps - 1e-9,
       unverified: false
     })
   }
 
+  // Parallel sets are sized to the DEVICE, the same rule as a single conductor:
+  // their combined ampacity must reach the device rating (240.4(C) above 800 A
+  // allows no next-size-up). Sizing them to the 125% design current instead let
+  // a derived device round up past the conductors - 3500 A continuous gave
+  // 10 x 750 = 4750 A of conductor on a 5000 A device.
+  const parallelBasisAmps = Math.max(ocpd, conductorAmps)
   const advForParallel = usingAdvanced
     ? { ambientC: opts.ambientC, numConductors: opts.numConductors }
     : {}
-  const parallel = selectWireSize(designAmps, material, tempRating, advForParallel).parallel || null
+  const parallel = selectWireSize(parallelBasisAmps, material, tempRating, advForParallel).parallel || null
 
   const rawIdx = candidates.findIndex(c => c.ok)
   if (rawIdx === -1) {
     return {
       error: `No single conductor works for a ${ocpd} A device at ${tempRating}°C with the applied factors. Use parallel conductors or review the design.`,
-      loadAmps, designAmps: round1(designAmps), ocpd, ocpdDerived, tempRating, parallel
+      loadAmps, designAmps: round1(designAmps), ocpd, ocpdDerived, tempRating,
+      parallel, parallelBasisAmps, hundredPercentRated, warnings
     }
   }
 
   // Step past hard-to-get sizes, but still report the one that would have worked.
   let selIdx = rawIdx
   let hardToGetSkipped = null
-  const warnings = []
   if (!isCommon(candidates[rawIdx].size)) {
     const commonIdx = candidates.findIndex((c, i) => i > rawIdx && c.ok && isCommon(c.size))
     if (commonIdx !== -1) {
@@ -196,6 +226,9 @@ export function sizeBranchCircuit(loadAmps, material, opts = {}) {
     hardToGetSkipped,
     nextSize: next ? { size: next.size, baseAmpacity: next.base } : null,
     parallel,
+    parallelBasisAmps,
+    hundredPercentRated,
+    conductorAmps: round1(conductorAmps),
     factors: {
       ambient: { factor: ambient.factor, label: ambient.label },
       adjust: { factor: adjust.factor, label: adjust.label },

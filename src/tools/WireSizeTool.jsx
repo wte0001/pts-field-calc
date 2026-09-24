@@ -125,6 +125,7 @@ export default function WireSizeTool() {
       </details>
 
       {result && result.error && <div className="err">{result.error}</div>}
+      {result && result.error && (result.warnings || []).map((w, i) => <div className="warn" key={'ew' + i}>{w}</div>)}
 
       {result && !result.error && (
         <div className="card result">
@@ -168,7 +169,7 @@ export default function WireSizeTool() {
               <tr>
                 <td>Check</td>
                 <td>
-                  carries {result.deratedAmpacity} A ≥ {result.designAmps} A design{' '}
+                  carries {result.deratedAmpacity} A ≥ {result.conductorAmps} A {result.hundredPercentRated ? 'load (100%-rated device)' : 'design'}{' '}
                   <span className="ok-tag">OK</span>, and may be protected at {result.protectedAt} A ≥ {result.ocpd} A{' '}
                   <span className="ok-tag">OK</span>
                 </td>
@@ -196,7 +197,7 @@ export default function WireSizeTool() {
 
       {result && result.parallel && (
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Load-carrying conductors — parallel run options, {result.designAmps} A design</h3>
+          <h3 style={{ marginTop: 0 }}>Load-carrying conductors — parallel run options, sized to the {result.parallelBasisAmps} A device</h3>
           <table className="widthtable">
             <thead>
               <tr><th>Runs/phase</th><th>Conductor</th><th>Per run</th><th>Total</th></tr>

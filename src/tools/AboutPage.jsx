@@ -67,6 +67,13 @@ export default function AboutPage() {
         plain words why 10 AWG was ruled out. Enter a device rating yourself to override the derived one.
       </p>
       <p>
+        <b>Parallel sets are sized to the device too</b> — their combined ampacity must reach the device
+        rating, since 240.4(C) allows no next-size-up above 800 A. A 5000 A device therefore takes
+        11 × 750 kcmil (5000 ÷ 475 = 10.5, rounded up). If you enter a device <em>below</em> 125% of a
+        continuous load, that is only legal where the assembly is listed for 100% continuous operation, so
+        the tool sizes the conductors at 100% of the load and says so rather than silently upsizing.
+      </p>
+      <p>
         <b>Not applied:</b> motor branch-circuit rules (430.52 permits far larger devices than 125%),
         and the 240.4(B)/(E)/(G) next-size-up and specific-application exceptions. Check those yourself.
       </p>
