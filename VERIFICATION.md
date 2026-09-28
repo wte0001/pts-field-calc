@@ -139,6 +139,15 @@ Added 2026-07-19 when the Wire tool was changed to size conductors **to the over
 
 ---
 
+## 14. Voltage drop feed schedule — `src/calc/vdSchedule.js` (added 2026-09-28)
+
+No new table data: each feed runs through the existing Table 9 / K-factor calc (sections 10 and 12). What needs sign-off is the chaining method.
+
+- [ ] Chain % = the feed's own % plus its source's chain %, adding percent-of-own-nominal across voltages on the same system (208 V feeder then a 120 V branch). Confirm this is how PTS totals feeder plus branch against the 5% informational-note guideline.
+- [ ] The chain restarts at a transformer and the transformer's regulation drop is not included. Confirm the inference rule: same system when the voltages are equal, when downstream is line-to-neutral of a wye (V/√3, within 2%), or 120 V off 240 V; anything else is treated as through a transformer. An isolation transformer at the same voltage has to be ticked by hand.
+- [ ] Deleting a feed unlinks the feeds it supplied (they become sources) rather than re-parenting them. Confirm that is the preferred behaviour.
+- [ ] The CSV lists the device and EGC only where a device rating was typed; the on-screen assumed device is not exported. Confirm.
+
 ## Edition caveat
 
 The author's table knowledge is strongest from the 2017/2020 NEC cycles. No changes to these specific table values in the 2023 edition are known to the author, but that claim itself is unverified. Check against the **2023** book, not an older one.

@@ -232,6 +232,25 @@ export default function AboutPage() {
         (VERIFICATION.md section 10).
       </p>
 
+      <h3>Voltage drop feed schedule</h3>
+      <p>
+        The Voltage Drop tab keeps a <b>schedule of up to 50 feeds</b>, saved on the phone. The inputs above
+        are the editor for one feed: tag it, tap <em>Save feed</em>, and it joins the list; tap any saved feed
+        to load it back and edit it. <em>Export schedule</em> writes the whole list to one CSV with every input,
+        the R / X / effective Z used, volts and percent dropped, the chain total, and pass/fail against 3% and 5%.
+        The device rating and EGC are listed only for feeds where a device was entered.
+      </p>
+      <p>
+        <b>Fed from</b> links a feed to its source, and the tool adds the drops along the chain and checks the
+        total against the 5% feeder-plus-branch guideline. The chain <b>restarts at a transformer</b>, because
+        the transformer's own regulation drop is not in this calculation and adding percentages across it would
+        understate the real drop. A transformer is inferred when the voltages cannot be one system (480 V feeding
+        208 V), and can be ticked for an isolation transformer at the same voltage. A 120 V branch off a 208Y/120 V
+        panel, or 277 V off 480Y/277 V, stays on the same chain. Percentages add as percent of each circuit's own
+        nominal voltage, the usual practice. Deleting a feed unlinks what it supplied rather than re-connecting
+        those feeds to its source.
+      </p>
+
       <h3>Power Converter tool</h3>
       <p>
         Standard AC power relationships, no table data: three-phase kVA = √3 × V(L-L) × A ÷ 1000,

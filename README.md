@@ -61,7 +61,7 @@ To stop it: click in the terminal and press `Ctrl+C`.
 npm test
 ```
 
-You should see all tests pass (242 of them, covering the tray fill cases including a standalone tray EGC counted in the fill, the cross-section drawing geometry, the multi-tray project model and its legacy-data migration, conduit parallel-set arrangements and 310.15(C)(1) adjustment, wire sizing (sized to the overcurrent device with 240.4(D) caps, the 110.14(C) column, hard-to-get size skipping, and parallel-run suggestions), EGC sizing with the 250.122(A)/(B)/(F) companion rules including the parallel and cable-tray arrangements, voltage drop (both methods), motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
+You should see all tests pass (271 of them, covering the tray fill cases including a standalone tray EGC counted in the fill, the cross-section drawing geometry, the multi-tray project model and its legacy-data migration, conduit parallel-set arrangements and 310.15(C)(1) adjustment, the voltage drop feed schedule and its chain totals, wire sizing (sized to the overcurrent device with 240.4(D) caps, the 110.14(C) column, hard-to-get size skipping, and parallel-run suggestions), EGC sizing with the 250.122(A)/(B)/(F) companion rules including the parallel and cable-tray arrangements, voltage drop (both methods), motor FLC, conduit fill, the kVA/A/kW converter, the heat-rejection estimator, and screen render checks). Run this any time you change a value in `src/data/`.
 
 ---
 
@@ -122,7 +122,7 @@ Send the team the URL. Then:
 2. Tap the three-dot menu → **Add to Home screen** (or "Install app" if offered).
 3. Open it once from the icon while online.
 
-The Cable Tray tab holds up to 10 independent tray designs, each with its own circuit list and standalone EGC. They are saved on the phone (localStorage) and survive refreshes and offline use. "Clear this tray" empties one tray's circuit list; "Delete tray" removes a whole design. Clearing the browser's site data erases all of it. Anything saved before the multi-tray upgrade is migrated into the first tray on next open — the old storage keys are left in place untouched as a fallback copy.
+The Cable Tray tab holds up to 10 independent tray designs, each with its own circuit list and standalone EGC. They are saved on the phone (localStorage) and survive refreshes and offline use. "Clear this tray" empties one tray's circuit list; "Delete tray" removes a whole design. Clearing the browser's site data erases all of it. The Voltage Drop tab likewise keeps a schedule of up to 50 feeds on the phone, exportable as one CSV. Anything saved before the multi-tray upgrade is migrated into the first tray on next open — the old storage keys are left in place untouched as a fallback copy.
 
 ---
 

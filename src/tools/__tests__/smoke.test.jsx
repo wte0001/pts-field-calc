@@ -62,6 +62,14 @@ describe('render smoke tests', () => {
     expect(html).toContain('ONE-WAY')
     expect(html).toContain('NEC Table 9')
   })
+  it('Voltage drop tool renders the feed editor and an empty schedule', () => {
+    const html = renderToStaticMarkup(React.createElement(VoltageDropTool))
+    expect(html).toContain('Feed tag')
+    expect(html).toContain('Fed from')
+    expect(html).toContain('Feed schedule')
+    expect(html).toContain('of 50 feeds')
+    expect(html).toContain('No feeds saved yet')
+  })
   it('Power converter renders with defaults', () => {
     const html = renderToStaticMarkup(React.createElement(PowerConvertTool))
     expect(html).toContain('Power Converter')
